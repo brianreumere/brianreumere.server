@@ -1,0 +1,19 @@
+- name: Set hostname
+  hostname:
+    name: "{{ hostname }}"
+
+- name: Set timezone
+  timezone:
+    name: "{{ timezone }}"
+
+- name: Include RedHat tasks
+  include_tasks: redhat.yml
+  when: ansible_facts["os_family"] == "RedHat"
+
+- name: Include OpenBSD tasks
+  include_tasks: openbsd.yml
+  when: ansible_facts["os_family"] == "OpenBSD"
+
+- name: Include Debian tasks
+  include_tasks: debian.yml
+  when: ansible_facts["os_family"] == "Debian"

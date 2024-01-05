@@ -1,0 +1,54 @@
+name: "Ansible collection build"
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+
+jobs:
+  build:
+    name: Build and publish
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Get version from Git tag
+        id: ref
+        run: |
+          type=$(printf "%s" "$GITHUB_REF" | cut -d '/' -f 2)
+          if [ "$type" = "tags" ]; then
+            tag=$(printf "%s" "$GITHUB_REF" | cut -d '/' -f 3)
+            version=$(printf "%s" "$tag" | tr -d 'v')
+            if ! printf "%s" "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              printf "Version %s is invalid\\n"
+              exit 1
+            else
+              echo "tag=${tag}" >> $GITHUB_OUTPUT
+              echo "version=${version}" >> $GITHUB_OUTPUT
+            fi
+          else
+            printf "Ref type %s is invalid for this workflow\\n" "$type"
+            exit 1
+          fi
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Ansible and dependencies
+        run: pip install ansible pyyaml
+      - name: Populate collection version
+        run: python galaxy.py
+        env:
+          GALAXY_VERSION: ${{ steps.ref.outputs.version }}
+      - name: Configure Ansible
+        run: printf "[galaxy]\\nserver_list = release\\n\\n[galaxy_server.release]\\nurl = https://galaxy.ansible.com/api/\\ntoken = %s\\n" "$GALAXY_TOKEN" > "${HOME}/.ansible.cfg"
+        env:
+          GALAXY_TOKEN: ${{ secrets.GALAXY_TOKEN }}
+      - name: Build collection
+        run: ansible-galaxy collection build
+      - name: Publish collection
+        run: ansible-galaxy collection publish *"$GALAXY_VERSION".tar.gz
+        env:
+          GALAXY_VERSION: ${{ steps.ref.outputs.version }}

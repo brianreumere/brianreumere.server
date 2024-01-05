@@ -1,0 +1,106 @@
+- name: Register RHEL subscription
+  redhat_subscription:
+    activationkey: "{{ redhat_activation_key }}"
+    org_id: "{{ redhat_org_id }}"
+    syspurpose:
+      usage: "{{ rhel_syspurpose_usage }}"
+      role: "{{ rhel_syspurpose_role }}"
+      service_level_agreement: "{{ rhel_syspurpose_service_level_agreement }}"
+      sync: true
+  when: redhat_subscription
+
+- name: Enable repos
+  rhsm_repository:
+    name: "{{ redhat_repos }}"
+  when: redhat_subscription and redhat_repos
+
+- name: Upgrade packages
+  dnf:
+    upgrade: yes
+    update_cache: yes
+  when: upgrade_packages
+
+- name: Install QEMU guest agent
+  dnf:
+    name: qemu-guest-agent
+    state: present
+    update_cache: true
+  when: install_qemu_guest_agent
+
+- name: Start and enable QEMU guest agent
+  service:
+    name: qemu-guest-agent
+    state: started
+    enabled: true
+  when: install_qemu_guest_agent
+
+- name: Install baseline packages
+  dnf:
+    name:
+      - dnf-automatic
+      - tmux
+      - vim
+      - net-tools
+    state: present
+    update_cache: true
+
+- name: Install firewalld
+  dnf:
+    name: firewalld
+    state: present
+    update_cache: true
+  when: enable_firewall
+
+- name: Start and enable firewalld
+  service:
+    name: firewalld
+    enabled: true
+    state: started
+  when: enable_firewall
+
+- name: Allow services
+  firewalld:
+    port: "{{ item.port }}/{{ item.proto}}"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop: "{{ firewalld_allowed_ports }}"
+  when: enable_firewall
+
+- name: Add non-root user
+  user:
+    name: "{{ nonroot_user }}"
+    groups: wheel
+    shell: /bin/bash
+
+- name: Set authorized keys
+  authorized_key:
+    user: "{{ nonroot_user }}"
+    key: "{{ ssh_authorized_keys | join('\n') }}"
+    state: present
+    exclusive: true
+
+- name: Copy 50-wheel-nopasswd
+  copy:
+    src: centos/50-wheel-nopasswd
+    dest: /etc/sudoers.d/50-wheel-nopasswd
+    owner: root
+    group: root
+    mode: 0440
+
+- name: Copy sshd_config
+  copy:
+    src: centos/sshd_config
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: 0600
+  notify: Restart sshd
+
+- name: Copy automatic.conf
+  template:
+    src: centos/automatic.conf.j2
+    dest: /etc/dnf/automatic.conf
+    owner: root
+    group: root
+    mode: 0644

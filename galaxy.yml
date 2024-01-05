@@ -1,0 +1,10 @@
+namespace: brianreumere
+name: server
+version: false
+readme: README.md
+authors:
+  - Brian Reumere <brian@mutualaid.info>
+description: Ansible collection for server configuration
+license:
+  - ISC
+repository: https://github.com/brianreumere/brianreumere.server

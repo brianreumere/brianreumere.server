@@ -1,0 +1,18 @@
+---
+hostname: "{{ inventory_hostname }}"
+short_hostname: "{{ inventory_hostname_short }}"
+upgrade_packages: false
+install_qemu_guest_agent: false
+timezone: UTC
+enable_firewall: true
+firewalld_allowed_ports:
+  - port: 22
+    proto: tcp
+ufw_allowed_ports:
+  - port: 22
+    proto: tcp
+redhat_subscription: false
+redhat_repos: []
+rhel_syspurpose_usage: Development/Test
+rhel_syspurpose_role: RHEL Server
+rhel_syspurpose_service_level_agreement: Self-Support

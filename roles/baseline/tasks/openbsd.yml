@@ -1,0 +1,49 @@
+- name: Upgrade packages
+  shell:
+    cmd: pkg_add -u
+  when: upgrade_packages
+
+- name: Add non-root user
+  user:
+    name: "{{ nonroot_user }}"
+    groups: wheel
+    shell: /bin/ksh
+
+- name: Set authorized keys
+  authorized_key:
+    user: "{{ nonroot_user }}"
+    key: "{{ ssh_authorized_keys | join('\n') }}"
+    state: present
+    exclusive: true
+
+- name: Copy doas.conf
+  template:
+    src: openbsd/doas.conf.j2
+    dest: /etc/doas.conf
+    owner: root
+    group: wheel
+    mode: 0644
+
+- name: Copy sshd_config
+  copy:
+    src: openbsd/sshd_config
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: wheel
+    mode: 0644
+  notify: Restart sshd
+
+- name: Schedule pkg_add -u
+  cron:
+    name: pkg_add -u
+    minute: 0
+    hour: 2
+    job: /usr/sbin/pkg_add -u
+  when: install_package_upgrades
+
+- name: Schedule syspatch
+  cron:
+    name: syspatch
+    minute: 0
+    hour: 4
+    job: /usr/sbin/syspatch
