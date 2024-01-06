@@ -1,0 +1,20 @@
+---
+dependencies: []
+galaxy_info:
+  role_name: baseline
+  description: Apply baseline settings to a server
+  min_ansible_version: '2.12'
+  platforms:
+    - name: EL
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
+    - name: GenericLinux
+      versions:
+        - all
+    - name: OpenBSD
+      versions:
+        - all
+
