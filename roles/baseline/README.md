@@ -16,6 +16,11 @@ Does baseline configuration of a Debian/Ubuntu, RHEL, or OpenBSD server:
 
 ## Variables
 
+### Required
+
+- `nonroot_user`: The non-root user to add
+- `authorized_keys`: A list of public SSH keys to authorize for the user
+
 ### Optional
 
 - `hostname`: System hostname (fully-qualified), defaults to `inventory_hostname`
