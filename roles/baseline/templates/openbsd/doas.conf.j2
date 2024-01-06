@@ -1,4 +1,1 @@
 permit nopass {{ nonroot_user }} as root
-permit nopass _telegraf cmd /sbin/pfctl args -s info
-permit nopass _telegraf as _unbound cmd /usr/sbin/unbound-control args stats_noreset
-permit nopass _telegraf as _nsd cmd /usr/sbin/nsd-control args stats_noreset

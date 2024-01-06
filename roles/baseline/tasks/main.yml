@@ -1,19 +1,20 @@
+---
 - name: Set hostname
-  hostname:
+  ansible.builtin.hostname:
     name: "{{ hostname }}"
 
 - name: Set timezone
-  timezone:
+  community.general.timezone:
     name: "{{ timezone }}"
 
-- name: Include RedHat tasks
-  include_tasks: redhat.yml
+- name: Include RHEL tasks
+  ansible.builtin.include: rhel.yml
   when: ansible_facts["os_family"] == "RedHat"
 
 - name: Include OpenBSD tasks
-  include_tasks: openbsd.yml
+  ansible.builtin.include: openbsd.yml
   when: ansible_facts["os_family"] == "OpenBSD"
 
 - name: Include Debian tasks
-  include_tasks: debian.yml
+  ansible.builtin.include: debian.yml
   when: ansible_facts["os_family"] == "Debian"

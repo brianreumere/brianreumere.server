@@ -1,23 +1,46 @@
+---
 - name: Upgrade packages
-  shell:
-    cmd: pkg_add -u
+  community.general.openbsd_pkg:
+    name: '*'
+    state: latest
   when: upgrade_packages
 
+- name: Install baseline packages
+  community.general.openbsd_pkg:
+    name: "{{ openbsd_baseline_packages }}"
+    state: present
+
+- name: Enable pf
+  ansible.builtin.service:
+    name: pf
+    enabled: true
+    state: started
+  when: enable_firewall
+
+- name: Copy pf.conf
+  ansible.builtin.template:
+    src: openbsd/pf.conf.j2
+    dest: /etc/pf.conf
+    owner: root
+    group: root
+    mode: '0600'
+  notify: Reload pf.conf
+
 - name: Add non-root user
-  user:
+  ansible.builtin.user:
     name: "{{ nonroot_user }}"
     groups: wheel
     shell: /bin/ksh
 
 - name: Set authorized keys
-  authorized_key:
+  ansible.posix.authorized_key:
     user: "{{ nonroot_user }}"
     key: "{{ ssh_authorized_keys | join('\n') }}"
     state: present
     exclusive: true
 
 - name: Copy doas.conf
-  template:
+  ansible.builtin.template:
     src: openbsd/doas.conf.j2
     dest: /etc/doas.conf
     owner: root
@@ -25,7 +48,7 @@
     mode: 0644
 
 - name: Copy sshd_config
-  copy:
+  ansible.builtin.copy:
     src: openbsd/sshd_config
     dest: /etc/ssh/sshd_config
     owner: root
@@ -39,7 +62,6 @@
     minute: 0
     hour: 2
     job: /usr/sbin/pkg_add -u
-  when: install_package_upgrades
 
 - name: Schedule syspatch
   cron:

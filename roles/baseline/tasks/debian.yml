@@ -1,63 +1,60 @@
+---
 - name: Upgrade packages
-  apt:
+  ansible.builtin.apt:
     upgrade: yes
     update_cache: yes
   when: upgrade_packages
 
 - name: Install QEMU guest agent
-  apt:
+  ansible.builtin.apt:
     name: qemu-guest-agent
     state: present
     update_cache: true
   when: install_qemu_guest_agent
 
 - name: Start and enable QEMU guest agent
-  service:
+  ansible.builtin.systemd_service:
     name: qemu-guest-agent
     state: started
     enabled: true
   when: install_qemu_guest_agent
 
 - name: Install baseline packages
-  apt:
-    name:
-      - unattended-upgrades
-      - tmux
-      - vim
-      - net-tools
+  ansible.builtin.apt:
+    name: "{{ debian_baseline_packages }}"
     state: present
     update_cache: true
 
-- name: Enable ufw
-  service:
+- name: Start and enable ufw
+  ansible.builtin.systemd_service:
     name: ufw
     enabled: true
     state: started
   when: enable_firewall
 
 - name: Allow services
-  ufw:
+  community.general.ufw:
     rule: allow
     port: "{{ item.port }}"
     proto: "{{ item.proto }}"
-  loop: "{{ ufw_allowed_ports }}"
+  loop: "{{ allowed_ports }}"
   when: enable_firewall
 
 - name: Add non-root user
-  user:
+  ansible.builtin.user:
     name: "{{ nonroot_user }}"
     groups: sudo
     shell: /bin/bash
 
 - name: Set authorized keys
-  authorized_key:
+  ansible.posix.authorized_key:
     user: "{{ nonroot_user }}"
     key: "{{ ssh_authorized_keys | join('\n') }}"
     state: present
     exclusive: true
 
 - name: Copy 50-sudo-nopasswd
-  copy:
+  ansible.builtin.copy:
     src: ubuntu/50-sudo-nopasswd
     dest: /etc/sudoers.d/50-sudo-nopasswd
     owner: root
@@ -65,7 +62,7 @@
     mode: 0440
 
 - name: Copy sshd_config
-  copy:
+  ansible.builtin.copy:
     src: ubuntu/sshd_config
     dest: /etc/ssh/sshd_config
     owner: root
@@ -74,7 +71,7 @@
   notify: Restart sshd
 
 - name: Copy 50unattended-upgrades
-  template:
+  ansible.builtin.template:
     src: ubuntu/50unattended-upgrades.j2
     dest: /etc/apt/apt.conf.d/50unattended-upgrades
     owner: root

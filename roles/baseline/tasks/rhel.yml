@@ -1,5 +1,6 @@
+---
 - name: Register RHEL subscription
-  redhat_subscription:
+  community.general.redhat_subscription:
     activationkey: "{{ redhat_activation_key }}"
     org_id: "{{ redhat_org_id }}"
     syspurpose:
@@ -15,82 +16,78 @@
   when: redhat_subscription and redhat_repos
 
 - name: Upgrade packages
-  dnf:
+  ansible.builtin.dnf:
     upgrade: yes
     update_cache: yes
   when: upgrade_packages
 
 - name: Install QEMU guest agent
-  dnf:
+  ansible.builtin.dnf:
     name: qemu-guest-agent
     state: present
     update_cache: true
   when: install_qemu_guest_agent
 
 - name: Start and enable QEMU guest agent
-  service:
+  ansible.builtin.systemd_service:
     name: qemu-guest-agent
     state: started
     enabled: true
   when: install_qemu_guest_agent
 
 - name: Install baseline packages
-  dnf:
-    name:
-      - dnf-automatic
-      - tmux
-      - vim
-      - net-tools
+  ansible.builtin.dnf:
+    name: "{{ rhel_baseline_packages }}"
     state: present
     update_cache: true
 
 - name: Install firewalld
-  dnf:
+  ansible.builtin.dnf:
     name: firewalld
     state: present
     update_cache: true
   when: enable_firewall
 
 - name: Start and enable firewalld
-  service:
+  ansible.builtin.systemd_service:
     name: firewalld
     enabled: true
     state: started
   when: enable_firewall
 
 - name: Allow services
-  firewalld:
-    port: "{{ item.port }}/{{ item.proto}}"
+  ansible.posix.firewalld:
+    port: "{{ item.port }}/{{ item.proto }}"
     permanent: true
     immediate: true
     state: enabled
-  loop: "{{ firewalld_allowed_ports }}"
+  loop: "{{ allowed_ports }}"
   when: enable_firewall
 
 - name: Add non-root user
-  user:
+  ansible.builtin.user:
     name: "{{ nonroot_user }}"
     groups: wheel
     shell: /bin/bash
 
 - name: Set authorized keys
-  authorized_key:
+  ansible.posix.authorized_key:
     user: "{{ nonroot_user }}"
     key: "{{ ssh_authorized_keys | join('\n') }}"
     state: present
     exclusive: true
 
 - name: Copy 50-wheel-nopasswd
-  copy:
-    src: centos/50-wheel-nopasswd
+  ansible.builtin.copy:
+    src: rhel/50-wheel-nopasswd
     dest: /etc/sudoers.d/50-wheel-nopasswd
     owner: root
     group: root
     mode: 0440
 
 - name: Copy sshd_config
-  copy:
-    src: centos/sshd_config
+  ansible.builtin.copy:
+    src: rhel/sshd_config
     dest: /etc/ssh/sshd_config
     owner: root
     group: root
@@ -98,8 +95,8 @@
   notify: Restart sshd
 
 - name: Copy automatic.conf
-  template:
-    src: centos/automatic.conf.j2
+  ansible.builtin.template:
+    src: rhel/automatic.conf.j2
     dest: /etc/dnf/automatic.conf
     owner: root
     group: root

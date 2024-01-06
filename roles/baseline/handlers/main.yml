@@ -1,10 +1,14 @@
 ---
 - name: Restart sshd
-  service:
+  ansible.builtin.service:
     name: sshd
     state: restarted
 
 - name: Restart unattended-upgrades
-  service:
+  ansible.builtin.systemd_service:
     name: unattended-upgrades
     state: restarted
+
+- name: Reload pf.conf
+  ansible.builtin.shell:
+    cmd: pfctl -e -f /etc/pf.conf

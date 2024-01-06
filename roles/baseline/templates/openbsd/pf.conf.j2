@@ -1,0 +1,22 @@
+# $OpenBSD: pf.conf,v 1.55 2017/12/03 20:40:04 sthen Exp $
+#
+# See pf.conf(5) and /etc/examples/pf.conf
+
+set skip on lo
+
+# Default deny
+block return
+
+# Allow traffic originating from this system
+pass out
+
+# Allow services
+{% for allowed in allowed_ports %}
+pass in on any proto {{ allowed.proto }} from any to self port {{ allowed.port }}
+{% endfor %}
+
+# By default, do not permit remote connections to X11
+block return in on ! lo0 proto tcp to port 6000:6010
+
+# Port build user does not need network
+block return out log proto {tcp udp} user _pbuild
