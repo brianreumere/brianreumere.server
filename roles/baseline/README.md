@@ -67,9 +67,16 @@ ansible-vault create rhel_secrets.yml
 
 ```yaml
 ---
-- name: Install shiori
+- name: Apply baseline
   ansible.builtin.include_role:
-    name: brianreumere.software.shiori
+    name: brianreumere.server.baseline
   vars:
-    shiori_hostname: shiori.example.net
+    install_qemu_guest_agent: true
+    allowed_ports:
+      - port: 22
+        proto: tcp
+      - port: 80
+        proto: tcp
+      - port: 443
+        proto: tcp
 ```
