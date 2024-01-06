@@ -57,14 +57,14 @@
   notify: Restart sshd
 
 - name: Schedule pkg_add -u
-  cron:
+  ansible.builtin.cron:
     name: pkg_add -u
     minute: 0
     hour: 2
     job: /usr/sbin/pkg_add -u
 
 - name: Schedule syspatch
-  cron:
+  ansible.builtin.cron:
     name: syspatch
     minute: 0
     hour: 4

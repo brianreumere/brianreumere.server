@@ -24,24 +24,24 @@ Does baseline configuration of a Debian/Ubuntu, RHEL, or OpenBSD server:
 - `timezone`: Timezone, defaults to `UTC`
 - `enable_firewall`: Whether to enable a firewall, defaults to `true`
 - `allowed_ports`: Dict of ports and protocols to allow, defaults to:
-```yaml
-- port: 22
-  proto: tcp
-```
+    ```yaml
+    - port: 22
+      proto: tcp
+    ```
 - `debian_baseline_packages`: List of packages to install on Debian/Ubuntu, defaults to:
-```yaml
-- unattended-upgrades
-- tmux
-- vim
-- net-tools
-```
+    ```yaml
+    - unattended-upgrades
+    - tmux
+    - vim
+    - net-tools
+    ```
 - `rhel_baseline_packages`: List of packages to install on RHEL, defaults to:
-```yaml
-- dnf-automatic
-- tmux
-- vim
-- net-tools
-```
+    ```yaml
+    - dnf-automatic
+    - tmux
+    - vim
+    - net-tools
+    ```
 - `openbsd_baseline_packages`: List of packages to install on OpenBSD, `[]` by default because OpenBSD includes useful packages in the base system
 - `install_nonsecurity_upgrades`: Whether to enable automatic installation of non-security package/OS upgrades, defaults to `false` (has no affect on OpenBSD)
 
