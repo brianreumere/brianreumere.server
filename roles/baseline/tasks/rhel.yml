@@ -11,7 +11,7 @@
   when: redhat_subscription
 
 - name: Enable repos
-  rhsm_repository:
+  community.general.rhsm_repository:
     name: "{{ redhat_repos }}"
   when: redhat_subscription and redhat_repos
 
