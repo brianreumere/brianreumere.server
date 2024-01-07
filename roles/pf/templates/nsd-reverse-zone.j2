@@ -1,0 +1,17 @@
+$ORIGIN {{ dns_reverse_zone }}.
+$TTL 1d
+
+@ IN SOA {{ dns_soa_master }}. {{ dns_soa_email | replace('@', '.') }}. (
+  2     ; serial
+  1h    ; refresh
+  30m   ; retry
+  7d    ; expiration
+  1h )  ; minimum
+
+{% for ns in dns_ns -%}
+{{ dns_reverse_zone }}. NS {{ ns }}.
+{% endfor -%}
+
+{% for key, host in pf_hosts.items() if host.ptr -%}
+{{ (host.ip | ansible.utils.ipaddr('address') | split('.'))[dns_reverse_octets:] | reverse | join('.') }} PTR {{ key }}.{{ internal_dns_zone }}.
+{% endfor -%}

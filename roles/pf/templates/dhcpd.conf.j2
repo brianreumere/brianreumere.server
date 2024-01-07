@@ -1,0 +1,23 @@
+{% for key, subnet in subnets.items() if 'dhcp' in subnet.services -%}
+subnet {{ subnet.cidr | ansible.utils.ipaddr('network') }} netmask {{ subnet.cidr | ansible.utils.ipaddr('netmask') }} {
+        option routers {{ subnet.cidr | ansible.utils.nthhost(1) }};
+        {% if 'dns' in subnet.services -%}
+        option domain-name-servers {{ subnet.cidr | ansible.utils.nthhost(1) }};
+        option domain-name "{{ internal_dns_zone }}";
+        {% endif -%}
+        {% if subnet.services.dhcp is not none and 'add' in subnet.services.dhcp -%}
+        {% for line in subnet.services.dhcp.add -%}
+        {{ line }}
+        {% endfor -%}
+        {% endif -%}
+        {% if subnet.services.dhcp is not none and 'range' in subnet.services.dhcp -%}
+        range {{ subnet.services.dhcp.range | ansible.utils.nthhost(0) }} {{ subnet.services.dhcp.range | ansible.utils.nthhost(-1) }};
+        {% endif -%}
+        {% for key, host in pf_hosts.items() if 'res' in host and (subnet.cidr | ansible.utils.network_in_usable(host.ip | ansible.utils.ipaddr('address'))) -%}
+        host {{ key }} {
+                fixed-address {{ host.ip | ansible.utils.ipaddr('address') }};
+                hardware ethernet {{ host.res }};
+        }
+        {% endfor -%}
+}
+{% endfor -%}

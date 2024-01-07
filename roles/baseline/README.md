@@ -7,19 +7,19 @@ Does baseline configuration of a Debian/Ubuntu, RHEL, or OpenBSD server:
 - Sets system hostname
 - Sets timezone
 - Installs package upgrades (optional)
-- Installs QEMU guest agent (optional)
+- Installs QEMU guest agent (optional, not available for OpenBSD)
 - Installs some basic useful packages
 - Enables a firewall
 - Adds a non-root user, adds authorized SSH keys, and allows the user to use `sudo` or `doas`
-- Disallows root SSH login and password-based SSH login
-- Enables automatic package upgrades (optionally including non-security upgrades)
+- Disables root SSH logins and password-based SSH logins
+- Enables automatic package upgrades (for all packages and the base system on OpenBSD, and optionally including non-security apt/dnf upgrades on Linux variants)
 
 ## Variables
 
 ### Required
 
-- `nonroot_user`: The non-root user to add
-- `authorized_keys`: A list of public SSH keys to authorize for the user
+- `nonroot_user`: The username for the non-root user
+- `ssh_authorized_keys`: A list of public SSH keys to authorize for the non-root user
 
 ### Optional
 
@@ -29,24 +29,24 @@ Does baseline configuration of a Debian/Ubuntu, RHEL, or OpenBSD server:
 - `timezone`: Timezone, defaults to `UTC`
 - `enable_firewall`: Whether to enable a firewall, defaults to `true`
 - `allowed_ports`: Dict of ports and protocols to allow, defaults to:
-    ```yaml
-    - port: 22
-      proto: tcp
-    ```
+```yaml
+- port: 22
+  proto: tcp
+```
 - `debian_baseline_packages`: List of packages to install on Debian/Ubuntu, defaults to:
-    ```yaml
-    - unattended-upgrades
-    - tmux
-    - vim
-    - net-tools
-    ```
+```yaml
+- unattended-upgrades
+- tmux
+- vim
+- net-tools
+```
 - `rhel_baseline_packages`: List of packages to install on RHEL, defaults to:
-    ```yaml
-    - dnf-automatic
-    - tmux
-    - vim
-    - net-tools
-    ```
+```yaml
+- dnf-automatic
+- tmux
+- vim
+- net-tools
+```
 - `openbsd_baseline_packages`: List of packages to install on OpenBSD, `[]` by default because OpenBSD includes useful packages in the base system
 - `install_nonsecurity_upgrades`: Whether to enable automatic installation of non-security package/OS upgrades, defaults to `false` (has no affect on OpenBSD)
 

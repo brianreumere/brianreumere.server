@@ -1,0 +1,6 @@
+description "{{ item.key }}"
+rdomain {{ item.value.rdomain }}
+wgkey {{ s2s_vpn_secrets[item.key]['wgkey'] }}
+wgpeer {{ s2s_vpn_secrets[item.key]['wgpeer'] }} wgendpoint {{ s2s_vpn_secrets[item.key]['wgendpoint'] }} wgaip {{ s2s_vpn_secrets[item.key]['wgaip'] }} wgpsk {{ s2s_vpn_secrets[item.key]['wgpsk'] }} wgpka {{ s2s_vpn_secrets[item.key]['wgpka'] }}
+inet {{ s2s_vpn_secrets[item.key]['ip'] }}
+!route -T {{ item.value.rdomain }} -n add -inet default -iface {{ s2s_vpn_secrets[item.key]['ip'] | ansible.utils.ipaddr('address') }}

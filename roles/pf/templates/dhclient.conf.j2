@@ -1,0 +1,6 @@
+interface "{{ pf_egress_if }}" {
+{%if dns_enabled %}
+    supersede domain-name "{{ internal_dns_zone }}";
+    supersede domain-name-servers {{ pf_management_ip }};
+{% endif %}
+}

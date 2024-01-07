@@ -1,0 +1,33 @@
+# $OpenBSD: nsd.conf,v 1.11 2015/04/12 11:49:39 sthen Exp $
+
+server:
+        hide-version: yes
+        verbosity: 1
+        database: "" # disable database
+
+## bind to a specific address/port
+        ip-address: 127.0.0.1
+
+remote-control:
+       control-enable: yes
+
+## tsig key example
+#key:
+#       name: "tsig1.example.com."
+#       algorithm: hmac-sha256
+#       secret: "bWVrbWl0YXNkaWdvYXQ="
+
+## master zone example
+#zone:
+#       name: "example.com"
+#       zonefile: "master/example.com"
+#       notify: 192.0.2.1 NOKEY
+#       provide-xfr: 192.0.2.1 NOKEY
+
+zone:
+        name: "{{ internal_dns_zone }}"
+        zonefile: "master/{{ internal_dns_zone }}"
+
+zone:
+        name: "{{ dns_reverse_zone }}"
+        zonefile: "master/{{ dns_reverse_zone }}"

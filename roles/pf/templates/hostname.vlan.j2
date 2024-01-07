@@ -1,0 +1,4 @@
+description "{{ item.value.desc }}"
+vnetid {{ item.value.vlan }} parent {{ item.value.vpif }}
+inet {{ item.value.cidr | ansible.utils.nthhost(1) }} {{ item.value.cidr | ansible.utils.ipaddr('netmask') }}
+up
