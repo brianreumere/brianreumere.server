@@ -1,0 +1,31 @@
+- name: Restart sshd
+  service:
+    name: sshd
+    state: restarted
+
+- name: Netstart
+  shell:
+    cmd: /bin/sh /etc/netstart
+
+- name: Reload pf.conf and flush rules
+  shell:
+    cmd: pfctl -F rules -f /etc/pf.conf
+
+- name: Restart dhcpd
+  service:
+    name: dhcpd
+    state: restarted
+
+- name: Reset external network interface
+  shell:
+    cmd: sh /etc/netstart {{ pf_egress_if }}
+
+- name: Restart nsd
+  service:
+    name: nsd
+    state: restarted
+
+- name: Restart unbound
+  service:
+    name: unbound
+    state: restarted
