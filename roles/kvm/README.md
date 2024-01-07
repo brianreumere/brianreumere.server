@@ -31,7 +31,7 @@ This role assumes you have two network interfaces, one for management traffic an
 ```
 `kvm_cloud_config_authorized_key`: The SSH key to place in the cloud-config file (useful for creating VMs)
 `kvm_cloud_config_user`: The user to create on VMs launched with the cloud-config script
-`kvm_cloud_config_initial_password`: The initial password for users created on VMs launched with the cloud-config script, should be stored in an [Ansible vault file](https://docs.ansible.com/ansible/latest/vault_guide/vault_encrypting_content.html#encrypting-files-with-ansible-vault) or other secrets manager
+`kvm_cloud_config_initial_password`: The initial password for users created on VMs launched with the cloud-config script, should be stored in an [Ansible vault file](https://docs.ansible.com/ansible/latest/vault_guide/vault_encrypting_content.html#encrypting-files-with-ansible-vault) or other secrets manager (it will be stored in plain text in the cloud-config script on the KVM host, and should be reset by logging into any VMs provisioned using the script)
 
 For each directory configured in `kvm_dir_pools`, you must manually create the directory pool. For example:
 
