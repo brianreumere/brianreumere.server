@@ -22,9 +22,10 @@
     src: openbsd/pf.conf.j2
     dest: /etc/pf.conf
     owner: root
-    group: root
+    group: wheel
     mode: '0600'
   notify: Reload pf.conf
+  when: enable_firewall
 
 - name: Add non-root user
   ansible.builtin.user:

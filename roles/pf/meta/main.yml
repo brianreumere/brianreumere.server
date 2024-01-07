@@ -2,7 +2,7 @@
 dependencies: []
 galaxy_info:
   role_name: pf
-  description: Set up a pf firewall/router
+  description: Set up a pf firewall/router on OpenBSD
   min_ansible_version: '2.12'
   platforms:
     - name: OpenBSD
