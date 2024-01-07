@@ -2,9 +2,7 @@
 
 ## Overview
 
-Configures a pf-based firewall/router on OpenBSD. Optionally sets up additional services like DHCP and DNS.
-
-### pf ruleset
+Configures a [pf](https://www.openbsd.org/faq/pf/)-based firewall/router on OpenBSD. Optionally sets up additional services like DHCP and DNS.
 
 The pf ruleset is built around an inbound default deny policy and a `pass out` rule that allows all outbound traffic on all interfaces (with some exceptions like traffic out the egress interface to non-internet-routable IP address ranges and optionally misbehaving/blocked addresses). Traffic to internet-routable IP ranges is also allowed in on all VLAN and remote access VPN interfaces.
 
@@ -29,8 +27,8 @@ Any references to VPN (remote access or site-to-site) interfaces refer to Wiregu
         up
 ```
 - `pf_egress_if`: The physical network interface that is connected to the internet
-- `subnets`: See [Variable schemas](#variable-schemas)
-- `pf_hosts`: See [Variable schemas](#variable-schemas)
+- `subnets`: See [Subnets](#subnets)
+- `pf_hosts`: See [Hosts](#hosts)
 - `internal_dns_zone`: The domain to use for your internal DNS zone
 - `dns_reverse_zone`: The zone to serve reverse DNS (PTR) records for, for example `16.172.in-addr.arpa` if you want to serve records for the range `172.16.0.0/16`
 - `pf_management_ip`: The internal management IP address of the pf router (will be used as the DNS A record)
@@ -42,10 +40,10 @@ Any references to VPN (remote access or site-to-site) interfaces refer to Wiregu
 
 ### Optional
 
-- `ra_vpns`: Wireguard remote access VPNs, see [Variable schemas](#variable-schemas), defaults to `[]`
-- `s2s_vpns`: Wireguard site-to-site VPNs, see [Variable schemas](#variable-schemas), defaults to `[]`
-- `tables`: pf tables, see [Variable schemas](#variable-schemas), defaults to `[]`
-- `open_ports`: A list of ports to open on the egress interface and optionally redirect to another host, see [Variable schemas](#variable-schemas)
+- `ra_vpns`: Wireguard remote access VPNs, see [Remote access VPNs](#remote-access-vpns), defaults to `[]`
+- `s2s_vpns`: Wireguard site-to-site VPNs, see [Site-to-site VPNs](#site-to-site-vpns), defaults to `[]`
+- `tables`: pf tables, see [Tables](#tables), defaults to `[]`
+- `open_ports`: A list of ports to open on the egress interface and optionally redirect to another host, see [Open ports](#open-ports)
 - `pf_default_rdomain`: The default routing domain (used by subnet `hide_behind` functionality), defaults to `0`
 - `dns_enabled`: Whether Unbound is configured to recursively resolve hostnames and NSD is configured as an authoritative nameserver for your internal domain, defaults to `true`
 - `dhcpd_enabled`: Whether dhcpd is configured to give out DHCP leases, defaults to `true`
@@ -53,7 +51,7 @@ Any references to VPN (remote access or site-to-site) interfaces refer to Wiregu
 
 ## Variable schemas
 
-### `subnets`
+### Subnets
 
 Each key in the `subnets` variable is just a unique name to refer to the subnet by. It might closely match the `desc` (description) value, but doesn't have to. An example is below, followed by an explanation of each sub-item. Note that this example is not a working example, and some values are present just to demonstrate what is possible.
 
@@ -94,7 +92,7 @@ Each key in the `subnets` variable is just a unique name to refer to the subnet 
     - `dhcp` accepts the `range` (CIDR block that defines the range of addresses leased by dhcpd) and `add` (list of custom lines to add to the subnet's configuration in `dhcpd.conf`) items
 - `allow` follows the same format as in the `pf_hosts` variable
 
-### `pf_hosts`
+### Hosts
 
 Each key in the `pf_hosts` variable is a short hostname, e.g., `nas` for a network attached storage device. An example item from the `pf_hosts` dict is below, followed by an explanation of each sub-item.
 
@@ -136,7 +134,7 @@ Each key in the `pf_hosts` variable is a short hostname, e.g., `nas` for a netwo
 - `isolate` is an optional boolean; when set to `true` it blocks all traffic originating **from** the host
 - `allow` is a list of `port` and `proto` (protocol) combinations (these should be strings formatted any way that that is valid for [`pf.conf`](https://man.openbsd.org/pf.conf)) to allow (if `proto` is `icmp` then `port` should specify ICMP types like `echoreq` instead of port numbers) from a list of hosts or subnets in the `from` list; `name` should refer to a host, subnet, or table key in the `pf_hosts`, `subnets`, or `tables` dict, respectively, and `type` should indicate whether the item refers to a host, subnet, or table; if `type` is `host`, `subnet` is also required to indicate which subnet the host is a part of (note that pf syntax like `{ macro1 macro2 }` is **not** valid in any fields other than `port` and `proto`)
 
-### `ra_vpns`
+### Remote access VPNs
 
 ```
     ra_vpns:
@@ -167,7 +165,7 @@ ra_vpn_secrets:
         ip:   172.16.2.3/32
 ```
 
-### `s2s_vpns`
+### Site-to-site VPNs
 
 ```yaml
     s2s_vpns:
@@ -202,7 +200,7 @@ s2s_vpn_secrets:
     ip: <IP address>
 ```
 
-### `tables`
+### Tables
 
 ```yaml
     tables:
@@ -219,7 +217,7 @@ s2s_vpn_secrets:
 - `desc` is a description of the table
 - `type` is `block` (addresses in a `block` table will be blocked on the egress interface and site-to-site VPN interfaces with `block_in` set to `true`) or `authpf` (if any tables of this type exist, some setup of authpf will be done, and any usernames listed in the `users` will be created and assigned to the `authpf` login class)
 
-### `open_ports`
+### Open ports
 
 ```yaml
     open_ports:
