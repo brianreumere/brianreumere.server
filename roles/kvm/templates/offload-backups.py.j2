@@ -1,0 +1,280 @@
+#!/usr/bin/env python3
+
+import boto3
+import botocore
+import datetime
+import json
+import logging
+import os
+import re
+
+# virtnbdbackup is used to create differential backups. This script rotates backups according to a
+# configured retention policy, and uploads backups to S3-compatible storage.
+
+# Hardcode some stuff, could be parameterized later
+dry_run = False
+log_level = "INFO"
+
+# Set up a logger and S3 client for everything to use
+logger = logging.getLogger(__name__)
+stream_handler = logging.StreamHandler()
+logger.addHandler(stream_handler)
+logger.setLevel(log_level)
+
+bucket = "{{ s3_bucket }}"
+region = "{{ s3_region }}"
+endpoint = "{{ s3_endpoint }}"
+access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
+secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+sse_key = os.environ["AWS_SSE_KEY"]
+sse_key_md5 = os.environ["AWS_SSE_KEY_MD5"]
+
+session = boto3.session.Session()
+
+s3_client = session.client(
+    "s3",
+    region_name=region,
+    endpoint_url=endpoint,
+    aws_access_key_id=access_key_id,
+    aws_secret_access_key=secret_access_key
+)
+
+
+def file_uploaded(bucket, file_path, file_prefix):
+    """
+    Returns True or False if a local file has been uploaded or not.
+    """
+    # Strip backups_path from filesystem prefix to get key
+    key = file_path.removeprefix(f"{file_prefix}/")
+    logger.debug(f"Checking for key {key} in bucket {bucket}")
+    try:
+        head_object_result = s3_client.head_object(
+            Bucket=bucket,
+            Key=key,
+            SSECustomerKey=sse_key,
+            SSECustomerKeyMD5=sse_key_md5,
+            SSECustomerAlgorithm="AES256"
+        )
+        logger.debug(f"Found key: {head_object_result}")
+        return True
+    except botocore.exceptions.ClientError as e:
+        if e.response["Error"]["Code"] == "404":
+            logger.debug(f"Got 404 for key {key}")
+            return False
+        else:
+            logger.error(f"Got non-404 error response for key {key}: {e.response}")
+            raise e
+
+
+def upload_file(bucket, file_path, file_prefix):
+    """
+    Offloads a given file to remote storage.
+    """
+    # Strip backups_path from filesystem prefix to get key
+    key = file_path.removeprefix(f"{file_prefix}/")
+    if not dry_run:
+        logger.info(f"Uploading file {file_path} to key {key} in bucket {bucket}")
+        try:
+            s3_client.upload_file(
+                file_path,
+                bucket,
+                key,
+                ExtraArgs={
+                    "SSECustomerKey": sse_key,
+                    "SSECustomerKeyMD5": sse_key_md5,
+                    "SSECustomerAlgorithm": "AES256"
+                }
+            )
+            upload_result = f"Attempted upload of {file_path} to key {key} in bucket {bucket}"
+        except botocore.exceptions.ClientError as e:
+            raise e
+    else:
+        logger.info(
+            f"Would upload {file_path} to key {key} in bucket {bucket}, but dry run is enabled"
+        )
+        upload_result = f"Skipped upload of {file_path} to key {key} in {bucket} due to dry run"
+    return upload_result
+
+
+def get_diff_backup_ids(domain, disk, backups_prefix):
+    """
+    Finds IDs (epoch timestmps) of differential backups and returns a list of them.
+    """
+    diff_backup_ids = []
+    diff_backup_pattern = fr"^{disk}\.diff\.([0-9]+)\.data$"
+    logger.debug(f"Searching for differential backups in {backups_prefix}/{domain}")
+    with os.scandir(f"{backups_prefix}/{domain}") as it:
+        for entry in it:
+            match = re.match(diff_backup_pattern, entry.name)
+            if match:
+                logger.debug(
+                    f"File {entry.name} matched differential backup pattern, adding ID "
+                    f"{match.group(1)}"
+                )
+                diff_backup_ids.append(match.group(1))
+    return diff_backup_ids
+
+
+def get_backup_file_patterns(domain, disk, backups_prefix, ident, diff=False):
+    """
+    Generates regex patterns for all files associated with a given backup.
+    """
+    if diff:
+        backup_type = "diff"
+        # For differential backups, timestamps that identify files belonging to the same backup
+        # may be slightly different, so allow ~10 seconds tolerance
+        idents = list(range(int(ident) - 10, int(ident) + 10))
+        # Generate log timestamps to look for based on possible backups identifiers
+        log_timestamps = [
+            datetime.datetime.utcfromtimestamp(int(i)).strftime("%m%d%Y%H%M%S")
+            for i
+            in idents
+        ]
+    else:
+        backup_type = "full"
+        # For full backups, just look for the initial checkpoint that is created
+        idents = [ident]
+        # Accept any log timestamp
+        log_timestamps = [".*"]
+    file_patterns = []
+    for ident in idents:
+        file_patterns.extend([
+            fr"^{backups_prefix}/{domain}/{disk}\.{backup_type}\.{ident}\.data$",
+            fr"^{backups_prefix}/{domain}/{disk}\.{backup_type}\.{ident}\.data\.chksum$",
+            fr"^{backups_prefix}/{domain}/autostart\.{ident}$",
+            fr"^{backups_prefix}/{domain}/{disk}\.{ident}\.qcow\.json$",
+            fr"^{backups_prefix}/{domain}/vmconfig\.{ident}\.xml$"
+        ])
+    for log_timestamp in log_timestamps:
+        file_patterns.append(fr"^{backups_prefix}/{domain}/backup\.diff\.{log_timestamp}\.log$")
+    return file_patterns
+
+
+def find_files_to_upload(domain, disk, backups_prefix, ident, diff=False):
+    """
+    Finds files associated with a full or differential backup that need to be uploaded.
+    """
+    files_to_upload = []
+    file_patterns = get_backup_file_patterns(domain, disk, backups_prefix, ident, diff=diff)
+    with os.scandir(f"{backups_prefix}/{domain}") as it:
+        for entry in it:
+            if any(re.match(pattern, entry.path) for pattern in file_patterns):
+                if not file_uploaded(bucket, entry.path, backups_prefix):
+                    logger.info(
+                        f"File {entry.path} not found in bucket {bucket}, marking to upload"
+                    )
+                    files_to_upload.append(entry.path)
+    return files_to_upload
+
+
+def upload_full_backup(domain, disk, backups_prefix):
+    """
+    Handles uploading full backups and related files.
+    """
+    to_upload = []
+    results = []
+    checkpoint = "virtnbdbackup.0"
+    # Look for files in bucket and mark to upload
+    to_upload = find_files_to_upload(domain, disk, backups_prefix, checkpoint)
+    # Upload files that aren't uploaded yet
+    for file in to_upload:
+        results.append(upload_file(bucket, file, backups_prefix))
+    return results
+
+
+def upload_diff_backups(domain, disk, backups_prefix):
+    """
+    Handles uploading differential backups and related files.
+    """
+    to_upload = []
+    results = []
+    # Get IDs/timestamps for differential backups based on .data files
+    diff_ids = get_diff_backup_ids(domain, disk, backups_prefix)
+    logger.debug(f"Found differential backup IDs {diff_ids}")
+    for diff_id in diff_ids:
+        diff_datetime = datetime.datetime.utcfromtimestamp(int(diff_id))
+        if diff_datetime.day in upload_days_of_month:
+            logger.info(
+                f"Found differential backup {diff_id} ({diff_datetime.isoformat()}) that matches "
+                f"a day of the month in {upload_days_of_month}, checking if uploaded"
+            )
+            to_upload = find_files_to_upload(domain, disk, backups_prefix, diff_id, diff=True)
+        else:
+            logger.debug(
+                f"Differential backup {diff_id} ({diff_datetime.isoformat()}) day "
+                f"{diff_datetime.day} does not match any day of the month in "
+                f"{upload_days_of_month}, skipping"
+            )
+    # Upload files
+    for file in to_upload:
+        results.append(upload_file(bucket, file, backups_prefix))
+    return results
+
+
+def cleanup_diff_backups(domain, disk, backups_prefix, now, keep_days):
+    """
+    Deletes local differential backups older than some number of days.
+    """
+    results = []
+    diff_ids = get_diff_backup_ids(domain, disk, backups_prefix)
+    logger.debug(f"Found differential backup IDs for cleanup: {diff_ids}")
+    for diff_id in diff_ids:
+        diff_datetime = datetime.datetime.utcfromtimestamp(int(diff_id))
+        if (now - diff_datetime).days > keep_days:
+            logger.info(
+                f"Found differential backup {diff_id} ({diff_datetime.isoformat()}) that is older "
+                f"than {keep_days} days, deleting"
+            )
+            file_patterns = get_backup_file_patterns(
+                domain,
+                disk,
+                backups_prefix,
+                diff_id,
+                diff=True
+            )
+            with os.scandir(f"{backups_prefix}/{domain}") as it:
+                for entry in it:
+                    if any(re.match(pattern, entry.path) for pattern in file_patterns):
+                        if not dry_run:
+                            logger.debug(f"Deleting file {entry.path}")
+                            os.remove(entry.path)
+                            results.append(f"{entry.path} deleted")
+                        else:
+                            logger.debug(f"Dry run enabled, skipping deletion of {entry.path}")
+                            results.append(f"Dry run: {entry.path} not deleted")
+        else:
+            logger.debug(
+                f"Differential backup {diff_id} ({diff_datetime.isoformat()}) is not older than "
+                f"{keep_days} days, skipping"
+            )
+    return results
+
+
+now = datetime.datetime.utcnow()
+domains = json.loads('{{ kvm_domains_to_backup | to_json }}')
+upload_days_of_month = json.loads('{{ kvm_upload_days_of_month | to_json }}')
+keep_dailies = "{{ kvm_keep_dailies }}"
+backups_path = "{{ kvm_local_backup_path }}".rstrip("/")
+results = {}
+
+for domain, disks in domains.items():
+    for disk in disks:
+        results_key = f"{domain}/{disk}"
+        results[results_key] = []
+        # Always check if full backup is uploaded
+        upload_full_backup_result = upload_full_backup(domain, disk, backups_path)
+        results[results_key].append({"upload_full_backup_result": upload_full_backup_result})
+        # If it's the specified day of the month, upload that day's differential backup
+        upload_diff_backups_result = upload_diff_backups(domain, disk, backups_path)
+        results[results_key].append({"upload_diff_backups_result": upload_diff_backups_result})
+        # Clean up local differential backups older than the specified number of days
+        cleanup_diff_backups_result = cleanup_diff_backups(
+            domain,
+            disk,
+            backups_path,
+            now,
+            int(keep_dailies)
+        )
+        results[results_key].append({"cleanup_diff_backups_result": cleanup_diff_backups_result})
+
+logger.info(results)

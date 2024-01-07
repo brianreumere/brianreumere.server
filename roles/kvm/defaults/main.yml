@@ -1,0 +1,6 @@
+---
+kvm_backups_enabled: false
+kvm_pci_passthrough: true
+virtnbdbackup_version: 1.9.54
+virtnbdbackup_download_url: 'https://github.com/abbbi/virtnbdbackup/archive/refs/tags/v{{ virtnbdbackup_version }}.tar.gz'
+virtnbdbackup_checksum: 'sha256:429eea07c5a150c465ae69ce51ca0fa69bd7e6eb2cddf75ebdeb919084ffcd85'

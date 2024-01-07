@@ -1,0 +1,32 @@
+#jinja2:variable_start_string:'[[', variable_end_string:']]', block_start_string:'[%', block_end_string:'%]'
+## template: jinja
+#cloud-config
+disable_root: true
+disable_root_opts: no-port-forwarding,no-agent-forwarding,no-X11-forwarding
+ssh_pwauth: false
+users:
+  - name: root
+    lock_passwd: true
+  - name: [[ kvm_cloud_config_user ]]
+    lock_passwd: false
+    {% if v1.distro == "redhat" -%}
+    groups:
+      - wheel
+    {% elif v1.distro == "ubuntu" -%}
+    groups:
+      - sudo
+    {% endif -%}
+    ssh_authorized_keys:
+      - [[ kvm_cloud_config_authorized_key ]]
+chpasswd:
+  expire: true
+  users:
+    - name: [[ kvm_cloud_config_user ]]
+      password: [[ kvm_cloud_config_initial_password ]]
+      type: text
+growpart:
+  mode: auto
+  devices: ["/"]
+resize_rootfs: true
+locale: en_US
+timezone: UTC

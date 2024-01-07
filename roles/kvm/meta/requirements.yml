@@ -1,0 +1,5 @@
+---
+collections:
+  - name: brianreumere.util
+    version: ">=1.0.0,<2.0.0"
+    source: https://galaxy.ansible.com

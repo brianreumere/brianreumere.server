@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Run full backups if they don't exist, or differential backups if they do
+
+{% for domain, disks in kvm_domains_to_backup.items() -%}
+{% for disk in disks -%}
+if [ ! -f "{{ kvm_local_backup_path }}/{{ domain }}/{{ disk }}.full.data" ]; then
+    /usr/local/bin/virtnbdbackup -e -L -t stream -o {{ kvm_local_backup_path }}/{{ domain }} -l full -d {{ domain }} -i {{ disk }}
+else
+    /usr/local/bin/virtnbdbackup -e -L -t stream -o {{ kvm_local_backup_path }}/{{ domain }} -l diff -d {{ domain }} -i {{ disk }} 
+fi
+{% endfor -%}
+{% endfor -%}
+
+# Run offload/rotation script to upload and delete old backups
+
+/usr/local/bin/offload-backups

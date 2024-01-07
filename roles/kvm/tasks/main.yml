@@ -1,0 +1,197 @@
+---
+- name: Install QEMU/KVM/libvirt and miscellaneous packages
+  ansible.builtin.dnf:
+    name:
+      - qemu-kvm
+      - qemu-img
+      - libvirt
+      - virt-install
+      - libvirt-client
+      - lm_sensors
+      - python3-pip
+    state: present
+    update_cache: true
+
+- name: Enable kernel modules for PCI passthrough
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+    persistent: present
+  loop:
+    - vfio_pci
+    - vfio_pci_core
+    - vfio_iommu_type1
+  when: kvm_pci_passthrough
+
+- name: Configure management network interface
+  community.general.nmcli:
+    conn_name: Management
+    state: present
+    ifname: "{{ kvm_management_if }}"
+    autoconnect: true
+    type: ethernet
+    method4: manual
+    ip4: "{{ kvm_management_ip }}"
+    gw4: "{{ kvm_management_gw }}"
+    dns4: "{{ kvm_management_dns }}"
+    method6: link-local
+  notify: Reload NetworkManager connections
+
+- name: Configure virt provider network interface
+  community.general.nmcli:
+    conn_name: Virt
+    state: present
+    ifname: "{{ kvm_virt_if }}"
+    autoconnect: true
+    type: ethernet
+    method4: disabled
+    method6: disabled
+  notify: Reload NetworkManager connections
+
+- name: Create bridge interfaces
+  community.general.nmcli:
+    conn_name: "{{ item.name }} Bridge"
+    state: present
+    ifname: "{{ item.bridge }}"
+    autoconnect: true
+    type: bridge
+    method4: disabled
+    method6: disabled
+    never_default4: true
+    priority: 32768  # STP priority
+  loop: "{{ kvm_vlans }}"
+  notify: Reload NetworkManager connections
+
+- name: Create VLAN interfaces
+  community.general.nmcli:
+    conn_name: "{{ item.parent_dev }}.{{ item.vlan_id }}"
+    state: present
+    autoconnect: true
+    type: vlan
+    vlanid: "{{ item.vlan_id }}"
+    vlandev: "{{ item.parent_dev }}"
+    master: "{{ item.bridge }}"
+    slave_type: bridge
+    method4: disabled
+    method6: disabled
+    never_default4: true
+  loop: "{{ kvm_vlans }}"
+  notify: Reload NetworkManager connections
+
+- name: Enable libvirtd
+  ansible.builtin.systemd_service:
+    name: libvirtd
+    enabled: true
+
+- name: Create parent VM directory
+  ansible.builtin.file:
+    path: /{{ kvm_parent_dir.lstrip('/') }}
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Create storage pool directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0711
+  loop: "{{ kvm_dir_pools }}"
+
+- name: Set SELinux context on storage pool directories
+  community.general.sefcontext:
+    target: "{{ item.path.rstrip('/') }}(/.*)?"
+    setype: virt_image_t
+    state: present
+  loop: "{{ kvm_dir_pools }}"
+
+- name: Create user virt directory (for miscellaneous things)
+  ansible.builtin.file:
+    path: "~{{ kvm_nonroot_user }}/virt"
+    state: directory
+    owner: "{{ kvm_nonroot_user }}"
+    group: "{{ kvm_nonroot_user }}"
+    mode: 0755
+
+- name: Copy baseline cloud config
+  ansible.builtin.template:
+    src: cloud-config-baseline.yaml.j2
+    dest: "~{{ kvm_nonroot_user }}/virt/cloud-config-baseline.yaml"
+    owner: "{{ kvm_nonroot_user }}"
+    group: "{{ kvm_nonroot_user }}"
+    mode: 0644
+
+# Remaining tasks are configured if backups are enabled
+
+- name: Set S3 credentials in root .bash_profile
+  ansible.builtin.lineinfile:
+    path: /root/.bash_profile
+    regexp: '^export {{ item.name }}='
+    line: "export {{ item.name }}={{ item.value }}"
+  loop:
+    - name: AWS_ACCESS_KEY_ID
+      value: "{{ s3_access_key }}"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "{{ s3_secret_key }}"
+    - name: AWS_SSE_KEY
+      value: "{{ s3_sse_key }}"
+    - name: AWS_SSE_KEY_MD5
+      value: "{{ s3_sse_key_md5 }"
+  when: kvm_backups_enabled
+
+- name: Install Python packages
+  pip:
+    name:
+      - boto3
+    state: present
+  when: kvm_backups_enabled
+
+- name: Install virtnbdbackup
+  include_role:
+    name: brianreumere.util.install_from_url
+  vars:
+    name: virtnbdbackup
+    version: "{{ virtnbdbackup_version }}"
+    download_url: "{{ virtnbdbackup_download_url }}"
+    checksum: "{{ virtnbdbackup_checksum }}"
+    install_cmd: |
+      pip install -r requirements.txt
+      python setup.py install
+  when: kvm_backups_enabled
+
+- name: Create backups directory
+  file:
+    path: "{{ kvm_local_backup_path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  when: kvm_backups_enabled
+
+- name: Copy run-virtnbdbackup script
+  template:
+    src: run-virtnbdbackup.sh.j2
+    dest: /usr/local/bin/run-virtnbdbackup
+    owner: root
+    group: root
+    mode: 0755
+  when: kvm_backups_enabled
+
+- name: Copy offload-backups script
+  template:
+    src: offload-backups.py.j2
+    dest: /usr/local/bin/offload-backups
+    owner: root
+    group: root
+    mode: 0755
+  when: kvm_backups_enabled
+
+- name: Schedule run-virtnbdbackup cron job
+  cron:
+    name: Run virtnbdbackup
+    minute: "{{ kvm_backups_cron_minute }}"
+    hour: "{{ kvm_backups_cron_hour }}"
+    job: /usr/local/bin/run-virtnbdbackup
+  when: kvm_backups_enabled
