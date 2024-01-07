@@ -142,14 +142,14 @@
   when: kvm_backups_enabled
 
 - name: Install Python packages
-  pip:
+  ansible.builtin.pip:
     name:
       - boto3
     state: present
   when: kvm_backups_enabled
 
 - name: Install virtnbdbackup
-  include_role:
+  ansible.builtin.include_role:
     name: brianreumere.util.install_from_url
   vars:
     name: virtnbdbackup
@@ -162,7 +162,7 @@
   when: kvm_backups_enabled
 
 - name: Create backups directory
-  file:
+  ansible.builtin.file:
     path: "{{ kvm_local_backup_path }}"
     state: directory
     owner: root
@@ -171,7 +171,7 @@
   when: kvm_backups_enabled
 
 - name: Copy run-virtnbdbackup script
-  template:
+  ansible.builtin.template:
     src: run-virtnbdbackup.sh.j2
     dest: /usr/local/bin/run-virtnbdbackup
     owner: root
@@ -180,7 +180,7 @@
   when: kvm_backups_enabled
 
 - name: Copy offload-backups script
-  template:
+  ansible.builtin.template:
     src: offload-backups.py.j2
     dest: /usr/local/bin/offload-backups
     owner: root
@@ -189,7 +189,7 @@
   when: kvm_backups_enabled
 
 - name: Schedule run-virtnbdbackup cron job
-  cron:
+  ansible.builtin.cron:
     name: Run virtnbdbackup
     minute: "{{ kvm_backups_cron_minute }}"
     hour: "{{ kvm_backups_cron_hour }}"
