@@ -31,7 +31,7 @@
 
 - name: Copy site-to-site VPN hostname.if files
   ansible.builtin.template:
-    src: hostname.s2s_vpns.j2
+    src: hostname.s2s_vpn.j2
     dest: /etc/hostname.{{ item.value.if }}
     owner: root
     group: wheel
