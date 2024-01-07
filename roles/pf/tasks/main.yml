@@ -52,7 +52,7 @@
     owner: root
     group: wheel
     mode: 0644
-  when: tables | ansible.builtin.dict2items | selectattr('value.type', 'equalto', 'authpf') | list > 0
+  when: tables | ansible.builtin.dict2items | selectattr('value.type', 'equalto', 'authpf') | list | length > 0
 
 - name: Copy authpf.message
   ansible.builtin.template:
@@ -62,7 +62,7 @@
     group: wheel
     mode: 0644
   when:
-    - tables | ansible.builtin.dict2items | selectattr('value.type', 'equalto', 'authpf') | list > 0
+    - tables | ansible.builtin.dict2items | selectattr('value.type', 'equalto', 'authpf') | list | length > 0
     - authpf_message is not undefined
 
 - name: Create authpf users
