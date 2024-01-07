@@ -8,13 +8,13 @@
     name: "{{ timezone }}"
 
 - name: Include RHEL tasks
-  ansible.builtin.include: rhel.yml
+  ansible.builtin.include_tasks: rhel.yml
   when: ansible_facts["os_family"] == "RedHat"
 
 - name: Include OpenBSD tasks
-  ansible.builtin.include: openbsd.yml
+  ansible.builtin.include_tasks: openbsd.yml
   when: ansible_facts["os_family"] == "OpenBSD"
 
 - name: Include Debian tasks
-  ansible.builtin.include: debian.yml
+  ansible.builtin.include_tasks: debian.yml
   when: ansible_facts["os_family"] == "Debian"
