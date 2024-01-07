@@ -138,7 +138,7 @@
     - name: AWS_SSE_KEY
       value: "{{ s3_sse_key }}"
     - name: AWS_SSE_KEY_MD5
-      value: "{{ s3_sse_key_md5 }"
+      value: "{{ s3_sse_key_md5 }}"
   when: kvm_backups_enabled
 
 - name: Install Python packages
