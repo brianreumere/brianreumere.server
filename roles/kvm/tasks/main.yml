@@ -152,11 +152,11 @@
   ansible.builtin.include_role:
     name: brianreumere.util.install_from_url
   vars:
-    name: virtnbdbackup
-    version: "{{ kvm_virtnbdbackup_version }}"
-    download_url: "{{ kvm_virtnbdbackup_download_url }}"
-    checksum: "{{ kvm_virtnbdbackup_checksum }}"
-    install_cmd: |
+    install_from_url_name: virtnbdbackup
+    install_from_url_version: "{{ kvm_virtnbdbackup_version }}"
+    install_from_url_download_url: "{{ kvm_virtnbdbackup_download_url }}"
+    install_from_url_checksum: "{{ kvm_virtnbdbackup_checksum }}"
+    install_from_url_install_cmd: |
       pip install -r requirements.txt
       python setup.py install
   when: kvm_backups_enabled
