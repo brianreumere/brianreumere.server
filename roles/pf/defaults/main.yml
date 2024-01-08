@@ -1,8 +1,8 @@
 ---
-ra_vpns: []
-s2s_vpns: []
-tables: []
-open_ports: []
-dns_enabled: true
-dhcpd_enabled: true
+pf_ra_vpns: []
+pf_s2s_vpns: []
+pf_tables: []
+pf_open_ports: []
+pf_dns_enabled: true
+pf_dhcpd_enabled: true
 pf_default_rdomain: 0

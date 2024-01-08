@@ -25,9 +25,9 @@ remote-control:
 #       provide-xfr: 192.0.2.1 NOKEY
 
 zone:
-        name: "{{ internal_dns_zone }}"
-        zonefile: "master/{{ internal_dns_zone }}"
+        name: "{{ pf_internal_dns_zone }}"
+        zonefile: "master/{{ pf_internal_dns_zone }}"
 
 zone:
-        name: "{{ dns_reverse_zone }}"
-        zonefile: "master/{{ dns_reverse_zone }}"
+        name: "{{ pf_dns_reverse_zone }}"
+        zonefile: "master/{{ pf_dns_reverse_zone }}"

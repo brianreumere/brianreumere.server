@@ -1,9 +1,9 @@
-{% for key, subnet in subnets.items() if 'dhcp' in subnet.services -%}
+{% for key, subnet in pf_subnets.items() if 'dhcp' in subnet.services -%}
 subnet {{ subnet.cidr | ansible.utils.ipaddr('network') }} netmask {{ subnet.cidr | ansible.utils.ipaddr('netmask') }} {
         option routers {{ subnet.cidr | ansible.utils.nthhost(1) }};
         {% if 'dns' in subnet.services -%}
         option domain-name-servers {{ subnet.cidr | ansible.utils.nthhost(1) }};
-        option domain-name "{{ internal_dns_zone }}";
+        option domain-name "{{ pf_internal_dns_zone }}";
         {% endif -%}
         {% if subnet.services.dhcp is not none and 'add' in subnet.services.dhcp -%}
         {% for line in subnet.services.dhcp.add -%}

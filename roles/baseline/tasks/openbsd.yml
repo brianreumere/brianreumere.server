@@ -3,11 +3,11 @@
   community.general.openbsd_pkg:
     name: '*'
     state: latest
-  when: upgrade_packages
+  when: baseline_upgrade_packages
 
 - name: Install baseline packages
   community.general.openbsd_pkg:
-    name: "{{ openbsd_baseline_packages }}"
+    name: "{{ baseline_openbsd_packages }}"
     state: present
 
 - name: Enable pf
@@ -15,7 +15,7 @@
     name: pf
     enabled: true
     state: started
-  when: enable_firewall
+  when: baseline_enable_firewall
 
 - name: Copy pf.conf
   ansible.builtin.template:
@@ -25,18 +25,18 @@
     group: wheel
     mode: '0600'
   notify: Reload pf.conf
-  when: enable_firewall
+  when: baseline_enable_firewall
 
 - name: Add non-root user
   ansible.builtin.user:
-    name: "{{ nonroot_user }}"
+    name: "{{ baseline_nonroot_user }}"
     groups: wheel
     shell: /bin/ksh
 
 - name: Set authorized keys
   ansible.posix.authorized_key:
-    user: "{{ nonroot_user }}"
-    key: "{{ ssh_authorized_keys | join('\n') }}"
+    user: "{{ baseline_nonroot_user }}"
+    key: "{{ baseline_ssh_authorized_keys | join('\n') }}"
     state: present
     exclusive: true
 

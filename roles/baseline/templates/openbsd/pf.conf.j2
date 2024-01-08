@@ -11,7 +11,7 @@ block return
 pass out
 
 # Allow services
-{% for allowed in allowed_ports %}
+{% for allowed in baseline_allowed_ports %}
 pass in on any proto {{ allowed.proto }} from any to self port {{ allowed.port }}
 {% endfor %}
 

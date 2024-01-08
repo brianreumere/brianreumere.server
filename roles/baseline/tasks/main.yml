@@ -1,11 +1,11 @@
 ---
 - name: Set hostname
   ansible.builtin.hostname:
-    name: "{{ hostname }}"
+    name: "{{ baseline_hostname }}"
 
 - name: Set timezone
   community.general.timezone:
-    name: "{{ timezone }}"
+    name: "{{ baseline_timezone }}"
 
 - name: Include RHEL tasks
   ansible.builtin.include_tasks: rhel.yml

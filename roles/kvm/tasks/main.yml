@@ -132,13 +132,13 @@
     line: "export {{ item.name }}={{ item.value }}"
   loop:
     - name: AWS_ACCESS_KEY_ID
-      value: "{{ s3_access_key }}"
+      value: "{{ kvm_s3_access_key }}"
     - name: AWS_SECRET_ACCESS_KEY
-      value: "{{ s3_secret_key }}"
+      value: "{{ kvm_s3_secret_key }}"
     - name: AWS_SSE_KEY
-      value: "{{ s3_sse_key }}"
+      value: "{{ kvm_s3_sse_key }}"
     - name: AWS_SSE_KEY_MD5
-      value: "{{ s3_sse_key_md5 }}"
+      value: "{{ kvm_s3_sse_key_md5 }}"
   when: kvm_backups_enabled
 
 - name: Install Python packages
@@ -153,9 +153,9 @@
     name: brianreumere.util.install_from_url
   vars:
     name: virtnbdbackup
-    version: "{{ virtnbdbackup_version }}"
-    download_url: "{{ virtnbdbackup_download_url }}"
-    checksum: "{{ virtnbdbackup_checksum }}"
+    version: "{{ kvm_virtnbdbackup_version }}"
+    download_url: "{{ kvm_virtnbdbackup_download_url }}"
+    checksum: "{{ kvm_virtnbdbackup_checksum }}"
     install_cmd: |
       pip install -r requirements.txt
       python setup.py install

@@ -3,25 +3,25 @@
   ansible.builtin.apt:
     upgrade: yes
     update_cache: yes
-  when: upgrade_packages
+  when: baseline_upgrade_packages
 
 - name: Install QEMU guest agent
   ansible.builtin.apt:
     name: qemu-guest-agent
     state: present
     update_cache: true
-  when: install_qemu_guest_agent
+  when: baseline_install_qemu_guest_agent
 
 - name: Start and enable QEMU guest agent
   ansible.builtin.systemd_service:
     name: qemu-guest-agent
     state: started
     enabled: true
-  when: install_qemu_guest_agent
+  when: baseline_install_qemu_guest_agent
 
 - name: Install baseline packages
   ansible.builtin.apt:
-    name: "{{ debian_baseline_packages }}"
+    name: "{{ baseline_debian_packages }}"
     state: present
     update_cache: true
 
@@ -30,26 +30,26 @@
     name: ufw
     enabled: true
     state: started
-  when: enable_firewall
+  when: baseline_enable_firewall
 
 - name: Allow services
   community.general.ufw:
     rule: allow
     port: "{{ item.port }}"
     proto: "{{ item.proto }}"
-  loop: "{{ allowed_ports }}"
-  when: enable_firewall
+  loop: "{{ baseline_allowed_ports }}"
+  when: baseline_enable_firewall
 
 - name: Add non-root user
   ansible.builtin.user:
-    name: "{{ nonroot_user }}"
+    name: "{{ baseline_nonroot_user }}"
     groups: sudo
     shell: /bin/bash
 
 - name: Set authorized keys
   ansible.posix.authorized_key:
-    user: "{{ nonroot_user }}"
-    key: "{{ ssh_authorized_keys | join('\n') }}"
+    user: "{{ baseline_nonroot_user }}"
+    key: "{{ baseline_ssh_authorized_keys | join('\n') }}"
     state: present
     exclusive: true
 

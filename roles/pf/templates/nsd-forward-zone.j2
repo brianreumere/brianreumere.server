@@ -1,14 +1,14 @@
-$ORIGIN {{ internal_dns_zone }}.
+$ORIGIN {{ pf_internal_dns_zone }}.
 $TTL 1800
 
-@ IN SOA {{ dns_soa_master }}. {{ dns_soa_email | replace('@','.') }}. (
+@ IN SOA {{ pf_dns_soa_master }}. {{ pf_dns_soa_email | replace('@','.') }}. (
   2     ; serial
   1h    ; refresh
   30m   ; retry
   7d    ; expiration
   1h )  ; minimum
 
-{% for ns in dns_ns -%}
+{% for ns in pf_dns_ns -%}
 @ IN NS {{ ns }}.
 {% endfor -%}
 

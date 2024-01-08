@@ -1,25 +1,25 @@
 ---
-hostname: "{{ inventory_hostname }}"
-upgrade_packages: false
-install_qemu_guest_agent: false
-timezone: UTC
-enable_firewall: true
-allowed_ports:
+baseline_hostname: "{{ inventory_hostname }}"
+baseline_upgrade_packages: false
+baseline_install_qemu_guest_agent: false
+baseline_timezone: UTC
+baseline_enable_firewall: true
+baseline_allowed_ports:
   - port: 22
     proto: tcp
-redhat_subscription: false
-redhat_repos: []
-rhel_syspurpose_usage: Development/Test
-rhel_syspurpose_role: RHEL Server
-rhel_syspurpose_service_level_agreement: Self-Support
-debian_baseline_packages:
+baseline_redhat_subscription: false
+baseline_redhat_repos: []
+baseline_rhel_syspurpose_usage: Development/Test
+baseline_rhel_syspurpose_role: RHEL Server
+baseline_rhel_syspurpose_service_level_agreement: Self-Support
+baseline_debian_packages:
   - unattended-upgrades
   - tmux
   - vim
   - net-tools
-rhel_baseline_packages:
+baseline_rhel_packages:
   - dnf-automatic
   - tmux
   - vim
   - net-tools
-openbsd_baseline_packages: []
+baseline_openbsd_packages: []

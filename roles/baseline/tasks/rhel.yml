@@ -1,43 +1,43 @@
 ---
 - name: Register RHEL subscription
   community.general.redhat_subscription:
-    activationkey: "{{ redhat_activation_key }}"
-    org_id: "{{ redhat_org_id }}"
+    activationkey: "{{ baseline_redhat_activation_key }}"
+    org_id: "{{ baseline_redhat_org_id }}"
     syspurpose:
-      usage: "{{ rhel_syspurpose_usage }}"
-      role: "{{ rhel_syspurpose_role }}"
-      service_level_agreement: "{{ rhel_syspurpose_service_level_agreement }}"
+      usage: "{{ baseline_rhel_syspurpose_usage }}"
+      role: "{{ baseline_rhel_syspurpose_role }}"
+      service_level_agreement: "{{ baseline_rhel_syspurpose_service_level_agreement }}"
       sync: true
-  when: redhat_subscription
+  when: baseline_redhat_subscription
 
 - name: Enable repos
   community.general.rhsm_repository:
-    name: "{{ redhat_repos }}"
-  when: redhat_subscription and redhat_repos
+    name: "{{ baseline_redhat_repos }}"
+  when: baseline_redhat_subscription and baseline_redhat_repos
 
 - name: Upgrade packages
   ansible.builtin.dnf:
     upgrade: yes
     update_cache: yes
-  when: upgrade_packages
+  when: baseline_upgrade_packages
 
 - name: Install QEMU guest agent
   ansible.builtin.dnf:
     name: qemu-guest-agent
     state: present
     update_cache: true
-  when: install_qemu_guest_agent
+  when: baseline_install_qemu_guest_agent
 
 - name: Start and enable QEMU guest agent
   ansible.builtin.systemd_service:
     name: qemu-guest-agent
     state: started
     enabled: true
-  when: install_qemu_guest_agent
+  when: baseline_install_qemu_guest_agent
 
 - name: Install baseline packages
   ansible.builtin.dnf:
-    name: "{{ rhel_baseline_packages }}"
+    name: "{{ baseline_rhel_packages }}"
     state: present
     update_cache: true
 
@@ -46,14 +46,14 @@
     name: firewalld
     state: present
     update_cache: true
-  when: enable_firewall
+  when: baseline_enable_firewall
 
 - name: Start and enable firewalld
   ansible.builtin.systemd_service:
     name: firewalld
     enabled: true
     state: started
-  when: enable_firewall
+  when: baseline_enable_firewall
 
 - name: Allow services
   ansible.posix.firewalld:
@@ -61,19 +61,19 @@
     permanent: true
     immediate: true
     state: enabled
-  loop: "{{ allowed_ports }}"
-  when: enable_firewall
+  loop: "{{ baseline_allowed_ports }}"
+  when: baseline_enable_firewall
 
 - name: Add non-root user
   ansible.builtin.user:
-    name: "{{ nonroot_user }}"
+    name: "{{ baseline_nonroot_user }}"
     groups: wheel
     shell: /bin/bash
 
 - name: Set authorized keys
   ansible.posix.authorized_key:
-    user: "{{ nonroot_user }}"
-    key: "{{ ssh_authorized_keys | join('\n') }}"
+    user: "{{ baseline_nonroot_user }}"
+    key: "{{ baseline_ssh_authorized_keys | join('\n') }}"
     state: present
     exclusive: true
 

@@ -1,14 +1,14 @@
-$ORIGIN {{ dns_reverse_zone }}.
+$ORIGIN {{ pf_dns_reverse_zone }}.
 $TTL 1d
 
-@ IN SOA {{ dns_soa_master }}. {{ dns_soa_email | replace('@', '.') }}. (
+@ IN SOA {{ pf_dns_soa_master }}. {{ pf_dns_soa_email | replace('@', '.') }}. (
   2     ; serial
   1h    ; refresh
   30m   ; retry
   7d    ; expiration
   1h )  ; minimum
 
-{% for ns in dns_ns -%}
+{% for ns in pf_dns_ns -%}
 {{ dns_reverse_zone }}. NS {{ ns }}.
 {% endfor -%}
 

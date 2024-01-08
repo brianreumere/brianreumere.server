@@ -5,11 +5,11 @@
 # VLAN subnet interfaces (subnets keys + "_if")
 
 {% set all_subnet_ifs = [] -%}
-{% for key, subnet in subnets.items() if 'vlan' in subnet and subnet.vlan -%}
+{% for key, subnet in pf_subnets.items() if 'vlan' in subnet and subnet.vlan -%}
 {{ key }}_if="vlan{{ subnet.vlan }}"
 {{ all_subnet_ifs.append('$' + key + '_if') or "" -}}
 {% endfor %}
-{% for key, subnet in subnets.items() if 'phys' in subnet -%}
+{% for key, subnet in pf_subnets.items() if 'phys' in subnet -%}
 {{ key }}_if="{{ subnet.phys }}"
 {{ all_subnet_ifs.append('$' + key + '_if') or "" -}}
 {% endfor %}
@@ -17,7 +17,7 @@
 # Site-to-site VPN interfaces (s2s_vpns keys + "_if")
 
 {% set all_s2s_vpn_ifs = [] -%}
-{% for key, s2s_vpn in s2s_vpns.items() -%}
+{% for key, s2s_vpn in pf_s2s_vpns.items() -%}
 {{ key }}_if="{{ s2s_vpn.if }}"
 {{ all_s2s_vpn_ifs.append('$' + key + '_if') or "" -}}
 {% endfor %}
@@ -25,7 +25,7 @@
 # Remote access VPN interfaces (ra_vpns keys + "_if")
 
 {% set all_ra_vpn_ifs = [] -%}
-{% for key, ra_vpn in ra_vpns.items() -%}
+{% for key, ra_vpn in pf_ra_vpns.items() -%}
 {{ key }}_if="{{ ra_vpn.if }}"
 {{ all_ra_vpn_ifs.append('$' + key + '_if') or "" -}}
 {% endfor %}
@@ -40,7 +40,7 @@
 # Tables
 #
 
-{% for key, table in tables.items()  -%}
+{% for key, table in pf_tables.items()  -%}
 # {{ table.desc }}
 
 table <{{ key }}> persist
@@ -72,7 +72,7 @@ set loginterface egress
 # Quick blocks
 
 # Isolated networks (traffic not allowed to internet, and only allowed to specified other networks)
-{% for key, subnet in subnets.items() if 'isolate' in subnet and subnet.isolate -%}
+{% for key, subnet in pf_subnets.items() if 'isolate' in subnet and subnet.isolate -%}
 block in quick log on ${{ key }}_if from ${{ key }}_if:network to any
 {% endfor %}
 
@@ -87,17 +87,17 @@ match in all scrub (no-df random-id max-mss 1440)
 # Handle "hide behind" functionality to place subnets behind a WireGuard VPN
 
 # Assign internet-routable traffic and traffic to VPN DNS to the correct rtable
-{% for key, subnet in subnets.items() if 'hide_behind' in subnet -%}
-match in on ${{ key }}_if from ${{ key }}_if:network to !<martians> rtable {{ s2s_vpns[subnet.hide_behind]['rdomain'] }}
-match in on ${{ key }}_if from ${{ key }}_if:network to {{ s2s_vpns[subnet.hide_behind]['dns'] }} rtable {{ s2s_vpns[subnet.hide_behind]['rdomain'] }}
+{% for key, subnet in pf_subnets.items() if 'hide_behind' in subnet -%}
+match in on ${{ key }}_if from ${{ key }}_if:network to !<martians> rtable {{ pf_s2s_vpns[subnet.hide_behind]['rdomain'] }}
+match in on ${{ key }}_if from ${{ key }}_if:network to {{ pf_s2s_vpns[subnet.hide_behind]['dns'] }} rtable {{ pf_s2s_vpns[subnet.hide_behind]['rdomain'] }}
 match out on ${{ subnet.hide_behind }}_if from !(${{ subnet.hide_behind }}_if:network) to any nat-to (${{ subnet.hide_behind }}_if:0)
-pass in quick on ${{ key }}_if proto udp from ${{ key }}_if:network to {{ s2s_vpns[subnet.hide_behind]['dns'] }} port 53
-pass out quick on ${{ subnet.hide_behind }}_if proto udp from (${{ subnet.hide_behind }}_if:0) to {{ s2s_vpns[subnet.hide_behind]['dns'] }} port 53
+pass in quick on ${{ key }}_if proto udp from ${{ key }}_if:network to {{ pf_s2s_vpns[subnet.hide_behind]['dns'] }} port 53
+pass out quick on ${{ subnet.hide_behind }}_if proto udp from (${{ subnet.hide_behind }}_if:0) to {{ pf_s2s_vpns[subnet.hide_behind]['dns'] }} port 53
 {% endfor %}
-{% for key, s2s_vpn in s2s_vpns.items() if 'open' in s2s_vpn -%}
+{% for key, s2s_vpn in pf_s2s_vpns.items() if 'open' in s2s_vpn -%}
 
 # Allow forwarded ports from {{ key }} site-to-site VPN
-{% for open in s2s_vpn.open -%}
+{% for open in pf_s2s_vpn.open -%}
 pass in quick on ${{ key }}_if proto {{ open.proto }} from any to ${{ key }}_if port {{ open.port }} rdr-to ${{ open.rdr_to }}_ip rtable {{ pf_default_rdomain }}
 {% endfor %}
 
@@ -118,17 +118,17 @@ antispoof quick for { egress, {{ (all_subnet_ifs + all_s2s_vpn_ifs + all_ra_vpn_
 #
 
 # Block weird IPs and tables with type 'block' on egress and some site-to-site VPN interfaces
-{% for key, table in tables.items() if 'type' in table and table.type == 'block' -%}
+{% for key, table in pf_tables.items() if 'type' in table and table.type == 'block' -%}
 block in quick log on egress from <{{ key }}> to any
 block return out quick log on egress from any to <{{ key }}>
-{% for subkey, s2s_vpn in s2s_vpns.items() if 'block_in' in s2s_vpn and s2s_vpn.block_in -%}
+{% for subkey, s2s_vpn in pf_s2s_vpns.items() if 'block_in' in s2s_vpn and s2s_vpn.block_in -%}
 block in quick log on ${{ subkey }}_if from <{{ key }}> to any
 block return out quick log on ${{ subkey }}_if from any to <{{ key }}>
 {% endfor -%}
 {% endfor %}
 block in quick log on egress from <martians> to any
 block return out quick log on egress from any to <martians>
-{% for key, s2s_vpn in s2s_vpns.items() if 'block_in' in s2s_vpn and s2s_vpn.block_in -%}
+{% for key, s2s_vpn in pf_s2s_vpns.items() if 'block_in' in s2s_vpn and s2s_vpn.block_in -%}
 block in quick log on ${{ key }}_if from <martians> to any
 block return out quick log on ${{ key }}_if from any to <martians>
 {% endfor %}
@@ -140,7 +140,7 @@ block log all
 pass out quick
 
 # Allow services internally to subnets
-{% for key, subnet in subnets.items() if 'services' in subnet -%}
+{% for key, subnet in pf_subnets.items() if 'services' in subnet -%}
 {% set service_tcp_ports = [] -%}
 {% set service_udp_ports = [] -%}
 {% set service_icmp_types = [] -%}
@@ -180,7 +180,7 @@ pass in on ${{ source.subnet }}_if inet proto {{ allow.proto }} from <{{ source.
 {% endfor %}
 
 # Allow traffic to subnets
-{% for key, subnet in subnets.items() if 'allow' in subnet -%}
+{% for key, subnet in pf_subnets.items() if 'allow' in subnet -%}
 {% for allow in subnet.allow -%}
 {% if allow.proto == 'icmp' -%}
 {% set filter = 'icmp-type' -%}
@@ -203,7 +203,7 @@ pass in on ${{ source.subnet }}_if inet proto {{ allow.proto }} from <{{ source.
 pass in on { {{ (all_subnet_ifs + all_ra_vpn_ifs) | join(' ') }} } to !<martians>
 
 # Allow public open ports/services
-{% for open in open_ports %}
+{% for open in pf_open_ports %}
 pass in on egress proto {{ open.proto }} from any to egress port {{ open.port }}{% if open.rdr_to %} rdr-to ${{ open.rdr_to | replace('-', '_') }}_ip{% endif %}{% if open.rate_limit %} keep state (max-src-conn-rate 3/10, overload <{{ open.rl_table }}> flush global){% endif %}
 
 {% endfor %}

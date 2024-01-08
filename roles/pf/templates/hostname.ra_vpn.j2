@@ -1,11 +1,11 @@
 description "{{ item.key }}"
-wgkey {{ ra_vpn_secrets[item.key]['wgkey'] }}
+wgkey {{ pf_ra_vpn_secrets[item.key]['wgkey'] }}
 wgport 443
 
-{% for peer in ra_vpn_secrets[item.key]['peers'] -%}
+{% for peer in pf_ra_vpn_secrets[item.key]['peers'] -%}
 # {{ peer.name }}
 wgpeer {{ peer.key }} wgaip {{ peer.ip }}
 {% endfor -%}
 
-inet {{ subnets[item.key]['cidr'] | ansible.utils.nthhost(1) }} {{ subnets[item.key]['cidr'] | ansible.utils.ipaddr('netmask') }}
+inet {{ pf_subnets[item.key]['cidr'] | ansible.utils.nthhost(1) }} {{ pf_subnets[item.key]['cidr'] | ansible.utils.ipaddr('netmask') }}
 up

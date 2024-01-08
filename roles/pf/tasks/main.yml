@@ -16,7 +16,7 @@
     owner: root
     group: wheel
     mode: 0640
-  loop: "{{ subnets | dict2items | rejectattr('value.vlan', 'false') | list }}"
+  loop: "{{ pf_subnets | dict2items | rejectattr('value.vlan', 'false') | list }}"
   notify: Netstart
 
 - name: Copy remote access VPN hostname.if files
@@ -26,7 +26,7 @@
     owner: root
     group: wheel
     mode: 0640
-  loop: "{{ ra_vpns | dict2items }}"
+  loop: "{{ pf_ra_vpns | dict2items }}"
   notify: Netstart
 
 - name: Copy site-to-site VPN hostname.if files
@@ -36,7 +36,7 @@
     owner: root
     group: wheel
     mode: 0640
-  loop: "{{ s2s_vpns | dict2items }}"
+  loop: "{{ pf_s2s_vpns | dict2items }}"
   notify: Netstart
 
 - name: Allow traffic forwarding
@@ -52,7 +52,7 @@
     owner: root
     group: wheel
     mode: 0644
-  when: tables | ansible.builtin.dict2items | selectattr('value.type', 'equalto', 'authpf') | list | length > 0
+  when: pf_tables | ansible.builtin.dict2items | selectattr('value.type', 'equalto', 'authpf') | list | length > 0
 
 - name: Copy authpf.message
   ansible.builtin.template:
@@ -62,14 +62,14 @@
     group: wheel
     mode: 0644
   when:
-    - tables | ansible.builtin.dict2items | selectattr('value.type', 'equalto', 'authpf') | list | length > 0
-    - authpf_message is not undefined
+    - pf_tables | ansible.builtin.dict2items | selectattr('value.type', 'equalto', 'authpf') | list | length > 0
+    - pf_authpf_message is not undefined
 
 - name: Create authpf users
   ansible.builtin.user:
     name: "{{ item }}"
     login_class: authpf
-  loop: "{{ tables | ansible.builtin.dict2items | selectattr('value.type', 'equalto', 'authpf') | list | json_query('[].value.users') | flatten }}"
+  loop: "{{ pf_tables | ansible.builtin.dict2items | selectattr('value.type', 'equalto', 'authpf') | list | json_query('[].value.users') | flatten }}"
 
 - name: Copy pf.conf
   ansible.builtin.template:
@@ -97,7 +97,7 @@
     group: wheel
     mode: 0640
   notify: Restart dhcpd
-  when: dhcpd_enabled
+  when: pf_dhcpd_enabled
 
 - name: Copy nsd.conf
   ansible.builtin.template:
@@ -107,27 +107,27 @@
     group: wheel
     mode: 0640
   notify: Restart nsd
-  when: dns_enabled
+  when: pf_dns_enabled
 
 - name: Copy forward zonefile
   ansible.builtin.template:
     src: nsd-forward-zone.j2
-    dest: /var/nsd/zones/master/{{ internal_dns_zone }}
+    dest: /var/nsd/zones/master/{{ pf_internal_dns_zone }}
     owner: _nsd
     group: _nsd
     mode: 0640
   notify: Restart nsd
-  when: dns_enabled
+  when: pf_dns_enabled
 
 - name: Copy reverse zonefile
   ansible.builtin.template:
     src: nsd-reverse-zone.j2
-    dest: /var/nsd/zones/master/{{ dns_reverse_zone }}
+    dest: /var/nsd/zones/master/{{ pf_dns_reverse_zone }}
     owner: _nsd
     group: _nsd
     mode: 0640
   notify: Restart nsd
-  when: dns_enabled
+  when: pf_dns_enabled
 
 - name: Copy unbound.conf
   ansible.builtin.template:
@@ -137,4 +137,4 @@
     group: wheel
     mode: 0640
   notify: Restart unbound
-  when: dns_enabled
+  when: pf_dns_enabled

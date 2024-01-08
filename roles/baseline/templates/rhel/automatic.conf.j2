@@ -2,7 +2,7 @@
 #  What kind of upgrade to perform:
 # default                            = all available upgrades
 # security                           = only the security upgrades
-{% if install_nonsecurity_upgrades %}
+{% if baseline_install_nonsecurity_upgrades %}
 upgrade_type = default{% else %}
 upgrade_type = security{% endif %}
 random_sleep = 0

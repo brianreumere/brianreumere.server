@@ -21,9 +21,9 @@ stream_handler = logging.StreamHandler()
 logger.addHandler(stream_handler)
 logger.setLevel(log_level)
 
-bucket = "{{ s3_bucket }}"
-region = "{{ s3_region }}"
-endpoint = "{{ s3_endpoint }}"
+bucket = "{{ kvm_s3_bucket }}"
+region = "{{ kvm_s3_region }}"
+endpoint = "{{ kvm_s3_endpoint }}"
 access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
 secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
 sse_key = os.environ["AWS_SSE_KEY"]
