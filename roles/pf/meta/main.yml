@@ -9,4 +9,6 @@ galaxy_info:
   platforms:
     - name: OpenBSD
       versions:
-        - all
+        - 7.2
+        - 7.3
+        - 7.4

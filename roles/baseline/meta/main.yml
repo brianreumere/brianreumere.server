@@ -9,13 +9,12 @@ galaxy_info:
   platforms:
     - name: EL
       versions:
-        - all
+        - 9
     - name: Ubuntu
       versions:
-        - all
-    - name: GenericLinux
-      versions:
-        - all
+        - jammy
     - name: OpenBSD
       versions:
-        - all
+        - 7.2
+        - 7.3
+        - 7.4
