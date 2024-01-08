@@ -9,9 +9,9 @@ $TTL 1d
   1h )  ; minimum
 
 {% for ns in pf_dns_ns -%}
-{{ dns_reverse_zone }}. NS {{ ns }}.
+{{ pf_dns_reverse_zone }}. NS {{ ns }}.
 {% endfor -%}
 
 {% for key, host in pf_hosts.items() if host.ptr -%}
-{{ (host.ip | ansible.utils.ipaddr('address') | split('.'))[dns_reverse_octets:] | reverse | join('.') }} PTR {{ key }}.{{ internal_dns_zone }}.
+{{ (host.ip | ansible.utils.ipaddr('address') | split('.'))[pf_dns_reverse_octets:] | reverse | join('.') }} PTR {{ key }}.{{ pf_internal_dns_zone }}.
 {% endfor -%}
