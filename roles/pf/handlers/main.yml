@@ -1,32 +1,32 @@
 ---
 - name: Restart sshd
-  service:
+  ansible.builtin.service:
     name: sshd
     state: restarted
 
-- name: Netstart
-  shell:
+- name: Netstart  # noqa no-changed-when
+  ansible.builtin.command:
     cmd: /bin/sh /etc/netstart
 
-- name: Reload pf.conf and flush rules
-  shell:
+- name: Reload pf.conf and flush rules  # noqa no-changed-when
+  ansible.builtin.command:
     cmd: pfctl -F rules -f /etc/pf.conf
 
 - name: Restart dhcpd
-  service:
+  ansible.builtin.service:
     name: dhcpd
     state: restarted
 
-- name: Reset external network interface
-  shell:
+- name: Reset external network interface  # noqa no-changed-when
+  ansible.builtin.command:
     cmd: sh /etc/netstart {{ pf_egress_if }}
 
 - name: Restart nsd
-  service:
+  ansible.builtin.service:
     name: nsd
     state: restarted
 
 - name: Restart unbound
-  service:
+  ansible.builtin.service:
     name: unbound
     state: restarted

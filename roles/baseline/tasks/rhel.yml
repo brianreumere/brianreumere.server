@@ -15,10 +15,11 @@
     name: "{{ baseline_redhat_repos }}"
   when: baseline_redhat_subscription and baseline_redhat_repos
 
-- name: Upgrade packages
+- name: Upgrade packages  # noqa package-latest
   ansible.builtin.dnf:
-    upgrade: yes
-    update_cache: yes
+    name: '*'
+    state: latest
+    update_cache: true
   when: baseline_upgrade_packages
 
 - name: Install QEMU guest agent
@@ -83,7 +84,7 @@
     dest: /etc/sudoers.d/50-wheel-nopasswd
     owner: root
     group: root
-    mode: 0440
+    mode: '0440'
 
 - name: Copy sshd_config
   ansible.builtin.copy:
@@ -91,7 +92,7 @@
     dest: /etc/ssh/sshd_config
     owner: root
     group: root
-    mode: 0600
+    mode: '0600'
   notify: Restart sshd
 
 - name: Copy automatic.conf
@@ -100,4 +101,4 @@
     dest: /etc/dnf/automatic.conf
     owner: root
     group: root
-    mode: 0644
+    mode: '0644'

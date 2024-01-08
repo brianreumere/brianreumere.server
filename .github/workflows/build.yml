@@ -43,7 +43,13 @@ jobs:
         env:
           GALAXY_VERSION: ${{ steps.ref.outputs.version }}
       - name: Configure Ansible
-        run: printf "[galaxy]\\nserver_list = release\\n\\n[galaxy_server.release]\\nurl = https://galaxy.ansible.com/api/\\ntoken = %s\\n" "$GALAXY_TOKEN" > "${HOME}/.ansible.cfg"
+        run: |
+          printf "[galaxy]\\n\
+          server_list = release\\n\\n\
+          [galaxy_server.release]\\n\
+          url = https://galaxy.ansible.com/api/\\n\
+          token = %s\\n" \
+          "$GALAXY_TOKEN" > "${HOME}/.ansible.cfg"
         env:
           GALAXY_TOKEN: ${{ secrets.GALAXY_TOKEN }}
       - name: Build collection

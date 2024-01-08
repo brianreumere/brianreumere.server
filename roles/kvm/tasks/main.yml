@@ -89,7 +89,7 @@
     state: directory
     owner: root
     group: root
-    mode: 0755
+    mode: '0755'
 
 - name: Create storage pool directories
   ansible.builtin.file:
@@ -97,7 +97,7 @@
     state: directory
     owner: root
     group: root
-    mode: 0711
+    mode: '0711'
   loop: "{{ kvm_dir_pools }}"
 
 - name: Set SELinux context on storage pool directories
@@ -113,7 +113,7 @@
     state: directory
     owner: "{{ kvm_nonroot_user }}"
     group: "{{ kvm_nonroot_user }}"
-    mode: 0755
+    mode: '0755'
 
 - name: Copy baseline cloud config
   ansible.builtin.template:
@@ -121,7 +121,7 @@
     dest: "~{{ kvm_nonroot_user }}/virt/cloud-config-baseline.yaml"
     owner: "{{ kvm_nonroot_user }}"
     group: "{{ kvm_nonroot_user }}"
-    mode: 0644
+    mode: '0644'
 
 # Remaining tasks are configured if backups are enabled
 
@@ -167,7 +167,7 @@
     state: directory
     owner: root
     group: root
-    mode: 0755
+    mode: '0755'
   when: kvm_backups_enabled
 
 - name: Copy run-virtnbdbackup script
@@ -176,7 +176,7 @@
     dest: /usr/local/bin/run-virtnbdbackup
     owner: root
     group: root
-    mode: 0755
+    mode: '0755'
   when: kvm_backups_enabled
 
 - name: Copy offload-backups script
@@ -185,7 +185,7 @@
     dest: /usr/local/bin/offload-backups
     owner: root
     group: root
-    mode: 0755
+    mode: '0755'
   when: kvm_backups_enabled
 
 - name: Schedule run-virtnbdbackup cron job

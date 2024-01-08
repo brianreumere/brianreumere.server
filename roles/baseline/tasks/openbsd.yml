@@ -46,7 +46,7 @@
     dest: /etc/doas.conf
     owner: root
     group: wheel
-    mode: 0644
+    mode: '0644'
 
 - name: Copy sshd_config
   ansible.builtin.copy:
@@ -54,7 +54,7 @@
     dest: /etc/ssh/sshd_config
     owner: root
     group: wheel
-    mode: 0644
+    mode: '0644'
   notify: Restart sshd
 
 - name: Schedule pkg_add -u

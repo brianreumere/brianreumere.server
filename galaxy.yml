@@ -1,10 +1,16 @@
+---
 namespace: brianreumere
 name: server
-version: false
+version: 1.0.0  # This will be replaced by the build workflow
 readme: README.md
 authors:
   - Brian Reumere <brian@mutualaid.info>
 description: Ansible collection for server configuration
 license:
   - ISC
+tags:
+  - infrastructure
+  - linux
+  - networking
+  - security
 repository: https://github.com/brianreumere/brianreumere.server

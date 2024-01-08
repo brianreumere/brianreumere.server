@@ -3,9 +3,10 @@ dependencies: []
 galaxy_info:
   role_name: pf
   description: Set up a pf firewall/router on OpenBSD
-  min_ansible_version: '2.12'
+  author: Brian Reumere <brian@mutualaid.info>
+  license: ISC
+  min_ansible_version: '2.15'
   platforms:
     - name: OpenBSD
       versions:
         - all
-

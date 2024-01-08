@@ -1,8 +1,8 @@
 ---
 - name: Upgrade packages
   ansible.builtin.apt:
-    upgrade: yes
-    update_cache: yes
+    upgrade: true
+    update_cache: true
   when: baseline_upgrade_packages
 
 - name: Install QEMU guest agent
@@ -59,7 +59,7 @@
     dest: /etc/sudoers.d/50-sudo-nopasswd
     owner: root
     group: root
-    mode: 0440
+    mode: '0440'
 
 - name: Copy sshd_config
   ansible.builtin.copy:
@@ -67,7 +67,7 @@
     dest: /etc/ssh/sshd_config
     owner: root
     group: root
-    mode: 0644
+    mode: '0644'
   notify: Restart sshd
 
 - name: Copy 50unattended-upgrades
@@ -76,5 +76,5 @@
     dest: /etc/apt/apt.conf.d/50unattended-upgrades
     owner: root
     group: root
-    mode: 0644
+    mode: '0644'
   notify: Restart unattended-upgrades

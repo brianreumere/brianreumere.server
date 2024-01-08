@@ -9,6 +9,6 @@
     name: unattended-upgrades
     state: restarted
 
-- name: Reload pf.conf
-  ansible.builtin.shell:
+- name: Reload pf.conf  # noqa no-changed-when
+  ansible.builtin.command:
     cmd: pfctl -e -f /etc/pf.conf

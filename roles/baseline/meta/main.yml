@@ -3,7 +3,9 @@ dependencies: []
 galaxy_info:
   role_name: baseline
   description: Apply baseline settings to a server
-  min_ansible_version: '2.12'
+  author: Brian Reumere <brian@mutualaid.info>
+  license: ISC
+  min_ansible_version: '2.15'
   platforms:
     - name: EL
       versions:
@@ -17,4 +19,3 @@ galaxy_info:
     - name: OpenBSD
       versions:
         - all
-
