@@ -10,28 +10,28 @@ This role assumes you have two network interfaces, one for management traffic an
 
 ### Required
 
-`kvm_management_if`: The management network interface
-`kvm_management_ip`: The IP address to configure on the management interface (including prefix)
-`kvm_management_gw`: The default gateway IP to configure on the management interface
-`kvm_management_dns`: A list of DNS servers to configure on the management interface
-`kvm_virt_if`: The network interface for VM traffic
-`kvm_vlans`: A list of VLAN interfaces to create, for example:
+- `kvm_management_if`: The management network interface
+- `kvm_management_ip`: The IP address to configure on the management interface (including prefix)
+- `kvm_management_gw`: The default gateway IP to configure on the management interface
+- `kvm_management_dns`: A list of DNS servers to configure on the management interface
+- `kvm_virt_if`: The network interface for VM traffic
+- `kvm_vlans`: A list of VLAN interfaces to create, for example:
 ```yaml
       - vlan_id: 200
         bridge: br200
         parent_dev: "{{ kvm_virt_if }}"
         name: Servers
 ```
-`kvm_nonroot_user`: A nonroot user you log into the KVM server with (should already exist)
-`kvm_parent_dir`: The parent directory for storage pools and other VM-related files (will be created under `/`)
-`kvm_dir_pools`: A list of directories to create for libvirt storage pools, for example:
+- `kvm_nonroot_user`: A nonroot user you log into the KVM server with (should already exist)
+- `kvm_parent_dir`: The parent directory for storage pools and other VM-related files (will be created under `/`)
+- `kvm_dir_pools`: A list of directories to create for libvirt storage pools, for example:
 ```yaml
       - pool_name: vms
         path: /libvirt/vms
 ```
-`kvm_cloud_config_authorized_key`: The SSH key to place in the cloud-config file (useful for creating VMs)
-`kvm_cloud_config_user`: The user to create on VMs launched with the cloud-config script
-`kvm_cloud_config_initial_password`: The initial password for users created on VMs launched with the cloud-config script, should be stored in an [Ansible vault file](https://docs.ansible.com/ansible/latest/vault_guide/vault_encrypting_content.html#encrypting-files-with-ansible-vault) or other secrets manager (it will be stored in plain text in the cloud-config script on the KVM host, and should be reset by logging into any VMs provisioned using the script)
+- `kvm_cloud_config_authorized_key`: The SSH key to place in the cloud-config file (useful for creating VMs)
+- `kvm_cloud_config_user`: The user to create on VMs launched with the cloud-config script
+- `kvm_cloud_config_initial_password`: The initial password for users created on VMs launched with the cloud-config script, should be stored in an [Ansible vault file](https://docs.ansible.com/ansible/latest/vault_guide/vault_encrypting_content.html#encrypting-files-with-ansible-vault) or other secrets manager (it will be stored in plain text in the cloud-config script on the KVM host, and should be reset by logging into any VMs provisioned using the script)
 
 For each directory configured in `kvm_dir_pools`, you must manually create the directory pool. For example:
 
@@ -78,8 +78,8 @@ Differential backups are hardcoded to run daily at the time you specify. To conf
 
 ### Optional
 
-`kvm_backups_enabled`: Whether to enable scheduled backups, defaults to `false`
-`kvm_pci_passthrough`: Whether to enable PCI passthrough kernel modules, defaults to `true`
+- `kvm_backups_enabled`: Whether to enable scheduled backups, defaults to `false`
+- `kvm_pci_passthrough`: Whether to enable PCI passthrough kernel modules, defaults to `true`
 
 ## Example
 
@@ -132,7 +132,7 @@ To launch VMs using the included cloud-config script, first download a base clou
 
 ```sh
 qemu-img create -f qcow2 -F qcow2 -b /images/base/jammy-server-cloudimg-amd64-disk-kvm.img /libvirt/vms/vm1.qcow2
-qemu-img resize /images/vms/vm1.qcow2 50G
+qemu-img resize /libvirt/vms/vm1.qcow2 50G
 ```
 
 Run `virt-install`. Be sure to log in with the password set in `kvm_cloud_config_initial_password` and set a new secure password on the VM after it launches (you can do so through the virtual console accessible with `virsh console`).

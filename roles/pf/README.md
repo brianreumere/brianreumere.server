@@ -43,7 +43,7 @@ Any references to VPN (remote access or site-to-site) interfaces refer to Wiregu
 - `pf_ra_vpns`: Wireguard remote access VPNs, see [Remote access VPNs](#remote-access-vpns), defaults to `[]`
 - `pf_s2s_vpns`: Wireguard site-to-site VPNs, see [Site-to-site VPNs](#site-to-site-vpns), defaults to `[]`
 - `pf_tables`: pf tables, see [Tables](#tables), defaults to `[]`
-- `pf_open_ports`: A list of ports to open on the egress interface and optionally redirect to another host, see [Open ports](#open-ports)
+- `pf_open_ports`: A list of ports to open on the egress interface and optionally redirect to another host, see [Open ports](#open-ports), defaults to `[]`
 - `pf_default_rdomain`: The default routing domain (used by subnet `hide_behind` functionality), defaults to `0`
 - `pf_dns_enabled`: Whether Unbound is configured to recursively resolve hostnames and NSD is configured as an authoritative nameserver for your internal domain, defaults to `true`
 - `pf_dhcpd_enabled`: Whether dhcpd is configured to give out DHCP leases, defaults to `true`
@@ -99,32 +99,32 @@ Each key in the `pf_hosts` variable is a short hostname, e.g., `nas` for a netwo
 ```yaml
     pf_hosts:
       nas:
-        ip:      172.16.0.5/24
-        ptr:     true
-        res:     36:6e:f0:6a:43:2a
+        ip: 172.16.0.5/24
+        ptr: true
+        res: 36:6e:f0:6a:43:2a
         isolate: false
         allow:
-          - port:  "{ 139, 445 }"
+          - port: "{ 139, 445 }"
             proto: tcp
             from:
-              - name:   laptop
-                type:   host
+              - name: laptop
+                type: host
                 subnet: my_vpn
-              - name:   wifi
-                type:   subnet
-          - port:  "0:65535"
+              - name: wifi
+                type: subnet
+          - port: "0:65535"
             proto: "{ tcp udp }"
             from:
               - name: authpf_users
                 type: table
-          - port:  echoreq
+          - port: echoreq
             proto: icmp
             from:
-              - name:   authpf_users
-                type:   table
+              - name: authpf_users
+                type: table
                 subnet: my_vpn
-              - name:   authpf_users
-                type:   table
+              - name: authpf_users
+                type: table
                 subnet: wifi
 ```
 
@@ -158,11 +158,11 @@ pf_ra_vpn_secrets:
     wgkey: '<private key>'
     peers:
       - name: Laptop
-        key:  '<laptop public key>'
-        ip:   172.16.2.2/32
+        key: '<laptop public key>'
+        ip: 172.16.2.2/32
       - name: Phone
-        key:  '<phone public key>'
-        ip:   172.16.2.3/32
+        key: '<phone public key>'
+        ip: 172.16.2.3/32
 ```
 
 ### Site-to-site VPNs
@@ -170,13 +170,13 @@ pf_ra_vpn_secrets:
 ```yaml
     pf_s2s_vpns:
       some_vpn:
-        if:       wg9
-        dns:      10.0.0.1
-        rdomain:  9
+        if: wg9
+        dns: 10.0.0.1
+        rdomain: 9
         block_in: true
         open:
-          - port:   3000
-            proto:  tcp
+          - port: 3000
+            proto: tcp
             rdr_to: some_host
 ```
 
@@ -221,16 +221,18 @@ pf_s2s_vpn_secrets:
 
 ```yaml
     pf_open_ports:
-      - port:       80
-        proto:      tcp
-        rdr_to:     www_server
+      - port: 80
+        proto: tcp
+        rdr_to: www_server
+        rdr_to_port: 80
         rate_limit: true
-        rl_table:   bad_ips
+        rl_table: bad_ips
 ```
 
 - `port` is the port allowed in on the egress interface
 - `proto` is the allowed protocol
 - `rdr_to` is optional, and is the host where the traffic is redirected to
+- `rdr_to_port` is required if `rdr_to` is specified, and is the port where traffic is redirected to
 - `rate_limit` optionally adds addresses that exceed some threshold to a table that is blocked
 - `rl_table` is the name of the table
 

@@ -204,6 +204,6 @@ pass in on { {{ (all_subnet_ifs + all_ra_vpn_ifs) | join(' ') }} } to !<martians
 
 # Allow public open ports/services
 {% for open in pf_open_ports %}
-pass in on egress proto {{ open.proto }} from any to egress port {{ open.port }}{% if open.rdr_to %} rdr-to ${{ open.rdr_to | replace('-', '_') }}_ip{% endif %}{% if open.rate_limit %} keep state (max-src-conn-rate 3/10, overload <{{ open.rl_table }}> flush global){% endif %}
+pass in on egress proto {{ open.proto }} from any to egress port {{ open.port }}{% if open.rdr_to %} rdr-to ${{ open.rdr_to | replace('-', '_') }}_ip{% endif %} ${{ open.rdr_to_port }}{% if open.rate_limit %} keep state (max-src-conn-rate 3/10, overload <{{ open.rl_table }}> flush global){% endif %}
 
 {% endfor %}
