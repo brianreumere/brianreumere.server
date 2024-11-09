@@ -193,5 +193,5 @@
     name: Run virtnbdbackup
     minute: "{{ kvm_backups_cron_minute }}"
     hour: "{{ kvm_backups_cron_hour }}"
-    job: /usr/local/bin/run-virtnbdbackup
+    job: source /root/.bash_profile && /usr/local/bin/run-virtnbdbackup
   when: kvm_backups_enabled

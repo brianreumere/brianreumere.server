@@ -10,13 +10,6 @@
     name: "{{ baseline_openbsd_packages }}"
     state: present
 
-- name: Enable pf
-  ansible.builtin.service:
-    name: pf
-    enabled: true
-    state: started
-  when: baseline_enable_firewall
-
 - name: Copy pf.conf
   ansible.builtin.template:
     src: openbsd/pf.conf.j2
