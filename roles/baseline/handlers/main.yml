@@ -11,4 +11,4 @@
 
 - name: Reload pf.conf  # noqa no-changed-when
   ansible.builtin.command:
-    cmd: pfctl -e -f /etc/pf.conf
+    cmd: pfctl -f /etc/pf.conf
