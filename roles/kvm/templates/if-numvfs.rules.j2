@@ -1,1 +1,1 @@
-ACTION=="add", SUBSYSTEM=="net", KERNEL=="{{ item.pci_id }}", ENV{ID_NET_DRIVER}=="ixgbe", ATTR{device/sriov_numvfs}="{{ item.vfs }}"
+ACTION=="add", SUBSYSTEM=="net", KERNELS=="{{ item.pci_id }}", ENV{ID_NET_DRIVER}=="ixgbe", ATTR{device/sriov_numvfs}="{{ item.vfs }}"
