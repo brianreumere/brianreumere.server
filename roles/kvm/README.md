@@ -14,7 +14,7 @@ This role assumes you have two network interfaces, one for management traffic an
 - `kvm_management_ip`: The IP address to configure on the management interface (including prefix)
 - `kvm_management_gw`: The default gateway IP to configure on the management interface
 - `kvm_management_dns`: A list of DNS servers to configure on the management interface
-- `kvm_virt_if`: The network interface for VM traffic
+- `kvm_virt_ifs`: Network interfaces for VM traffic (including configuration of SR-IOV virtual functions)
 - `kvm_vlans`: A list of VLAN interfaces to create, for example:
 ```yaml
       - vlan_id: 200

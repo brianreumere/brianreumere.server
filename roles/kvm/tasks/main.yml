@@ -37,15 +37,27 @@
     method6: link-local
   notify: Reload NetworkManager connections
 
-- name: Configure virt provider network interface
+- name: Configure virt provider network interfaces
   community.general.nmcli:
-    conn_name: Virt
+    conn_name: "{{ item.name }} Virt Interface"
     state: present
-    ifname: "{{ kvm_virt_if }}"
+    ifname: "{{ item.if }}"
     autoconnect: true
     type: ethernet
     method4: disabled
     method6: disabled
+  loop: "{{ kvm_virt_ifs }}"
+  notify: Reload NetworkManager connections
+
+- name: Configure SR-IOV virtual functions
+  ansible.builtin.template:
+    src: "{{ item.if }}.rules.j2"
+    dest: "/etc/udev/rules.d/{{ item.if }}.rules"
+    owner: root
+    group: root
+    mode: 0644
+  loop: "{{ kvm_virt_ifs }}"
+  when: item.vfs > 0
   notify: Reload NetworkManager connections
 
 - name: Create bridge interfaces
