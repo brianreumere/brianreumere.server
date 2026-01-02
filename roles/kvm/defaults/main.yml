@@ -1,4 +1,6 @@
 ---
+kvm_virt_ifs: []
+kvm_vlans: []
 kvm_backups_enabled: false
 kvm_pci_passthrough: true
 kvm_virtnbdbackup_version: 1.9.54
